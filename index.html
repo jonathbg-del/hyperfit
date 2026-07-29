@@ -496,11 +496,26 @@ const FOODS={
 };
 /* ================= ESTADO ================= */
 const KEY="hyperfit_v1";
+/* Config pública do Firebase (client config — não é segredo; o acesso aos dados é
+   protegido pelas regras do Firestore, que exigem login e só liberam o próprio uid).
+   Embutir aqui faz qualquer aparelho novo já conectar: basta "Entrar com Google".
+   A chave do Gemini NÃO fica aqui — essa é secreta e vive só no aparelho/nuvem. */
+const FIREBASE_DEFAULT={
+  apiKey:"AIzaSyD2pvypGYF9N15Fr6jXR-QfN8aKOLG8yo4",
+  authDomain:"hyperfit-app-aca73.firebaseapp.com",
+  projectId:"hyperfit-app-aca73",
+  storageBucket:"hyperfit-app-aca73.firebasestorage.app",
+  messagingSenderId:"418788759146",
+  appId:"1:418788759146:web:94362694bbf94ae4fe9c13"
+};
 function freshState(){return {sessions:[],diary:JSON.parse(JSON.stringify(DIARIO_SEED)),meals:[],chat:[],program:JSON.parse(JSON.stringify(PROGRAMA_DEFAULT)),settings:{geminiKey:"",theme:"dark",nutriMeta:{...META_DEFAULT},progPeriod:{gran:"dia",start:"",end:""}},draft:null};}
 let S=load();
 if(!S.program)S.program=JSON.parse(JSON.stringify(PROGRAMA_DEFAULT));
 let PROGRAMA=S.program;
-function load(){try{const r=localStorage.getItem(KEY);if(!r)return freshState();const s=Object.assign(freshState(),JSON.parse(r));s.settings=Object.assign({nutriMeta:{...META_DEFAULT}},s.settings);if(!s.settings.nutriMeta)s.settings.nutriMeta={...META_DEFAULT};return s;}catch(e){return freshState();}}
+function load(){let s;try{const r=localStorage.getItem(KEY);s=r?Object.assign(freshState(),JSON.parse(r)):freshState();s.settings=Object.assign({nutriMeta:{...META_DEFAULT}},s.settings);if(!s.settings.nutriMeta)s.settings.nutriMeta={...META_DEFAULT};}catch(e){s=freshState();}
+  // aparelho novo já vem com a config do Firebase — só falta entrar com o Google
+  if(!s.settings.firebase||!s.settings.firebase.apiKey)s.settings.firebase={...FIREBASE_DEFAULT};
+  return s;}
 function save(silent){S.updatedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(S));if(!silent&&typeof cloudAutoPush==="function")cloudAutoPush();}
 const META=()=>S.settings.nutriMeta||META_DEFAULT;
 
@@ -880,12 +895,26 @@ async function fbSignIn(){if(!FB.ready){await fbConnect();}if(!FB.ready)return;t
 async function fbSignOut(){try{if(FB.auth)await FB.signOut(FB.auth);}catch(e){}}
 function fbDocRef(){return FB._doc(FB.db,"hyperfit",FB.user.uid);}
 async function fbPull(){if(!FB.user)return null;const snap=await FB._getDoc(fbDocRef());return snap.exists()?snap.data():null;}
-async function fbPush(){if(!FB.user)return;try{await FB._setDoc(fbDocRef(),{state:JSON.stringify(S),updatedAt:S.updatedAt||Date.now(),email:FB.user.email||""});setSyncStatus("Sincronizado ✔ ("+FB.user.email+")");}catch(e){setSyncStatus("Erro ao enviar: "+(e.code||e.message||""));}}
+async function fbPush(){if(!FB.user)return;try{await FB._setDoc(fbDocRef(),{state:JSON.stringify(S),updatedAt:S.updatedAt||Date.now(),email:FB.user.email||""});S.syncedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(S));setSyncStatus("Sincronizado ✔ ("+FB.user.email+")");}catch(e){setSyncStatus("Erro ao enviar: "+(e.code||e.message||""));}}
+function adotarNuvem(cloud){const ns=Object.assign(freshState(),JSON.parse(cloud.state));ns.updatedAt=cloud.updatedAt||Date.now();ns.syncedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(ns));location.reload();}
+/* Este aparelho tem trabalho local que a nuvem não conhece? */
+function temTrabalhoLocal(){return S.sessions.length>0||S.meals.length>0||S.chat.length>0||JSON.stringify(S.diary)!==JSON.stringify(DIARIO_SEED);}
 async function fbInitialSync(){try{const cloud=await fbPull();
-    if(cloud&&cloud.state){const cu=cloud.updatedAt||0;
-      if(cu>(S.updatedAt||0)+1500){if(confirm("A nuvem tem dados mais recentes. Baixar e substituir os deste aparelho?")){const ns=Object.assign(freshState(),JSON.parse(cloud.state));ns.updatedAt=cu;localStorage.setItem(KEY,JSON.stringify(ns));location.reload();return;}else{await fbPush();}}
-      else{await fbPush();}
-    }else{await fbPush();}
+    if(!cloud||!cloud.state){await fbPush();renderSyncUI();return;}
+    const cu=cloud.updatedAt||0, nuncaSincronizou=!S.syncedAt;
+    // Aparelho novo e ainda sem nada registrado → adota a nuvem (nada a perder).
+    if(nuncaSincronizou&&!temTrabalhoLocal()){setSyncStatus("Baixando seus dados da nuvem…");adotarNuvem(cloud);return;}
+    // Nuvem mais recente → pergunta antes de substituir.
+    if(cu>(S.updatedAt||0)+1500){
+      if(confirm("A nuvem tem dados mais recentes que este aparelho. Baixar e substituir os dados locais?")){adotarNuvem(cloud);return;}
+      await fbPush();
+    }
+    // Aparelho novo COM registros locais e nuvem mais antiga → não sobrescreve calado.
+    else if(nuncaSincronizou&&cu>0){
+      if(!confirm("Este aparelho tem registros que a nuvem não tem. Enviar e substituir os dados da nuvem?\n\n(Cancelar = baixar o que está na nuvem)")){adotarNuvem(cloud);return;}
+      await fbPush();
+    }
+    else await fbPush();
     renderSyncUI();
   }catch(e){console.error(e);setSyncStatus("Erro na sincronização inicial.");}}
 let cloudTimer=null;
