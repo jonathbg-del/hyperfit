@@ -252,7 +252,7 @@ details pre{background:var(--bg);border:1px solid var(--border);border-radius:10
   <section class="view" id="view-diario">
     <div class="card">
       <h2 style="font-size:17px;margin-bottom:2px">Registro do dia</h2>
-      <p class="small muted">Dica: no Coach, anexe o print do sono e eu preencho isto automaticamente.</p>
+      <p class="small muted">Dica: no Coach, anexe os prints do sono (pode mandar os dois juntos) e eu preencho isto automaticamente.</p>
       <label class="f">Data</label>
       <input class="fld" type="date" id="dData" style="text-align:left">
       <div class="section-title" style="margin:16px 4px 2px">Sono</div>
@@ -364,7 +364,7 @@ details pre{background:var(--bg);border:1px solid var(--border);border-radius:10
   <div class="suggest" id="suggestBar"></div>
   <div class="chat-row">
     <button class="chat-btn" id="attachBtn" title="Anexar print">📎</button>
-    <input type="file" id="imgFile" accept="image/*" hidden>
+    <input type="file" id="imgFile" accept="image/*" multiple hidden>
     <textarea id="chatText" rows="1" placeholder="Fale com o coach..."></textarea>
     <button class="chat-btn send" id="chatSend">↑</button>
   </div>
@@ -698,7 +698,7 @@ function ruleCoach(q){q=q.toLowerCase();const r=readiness(),next=nextLetter(),w=
   if(/treino de hoje|qual treino|lista|exerc/.test(q)){let t=`**Treino ${next} · ${w.nome}** — ${w.foco}${w.cardio?" · 🏃 cardio Zona 2 após":""}\n\n`;w.exercicios.forEach(ex=>{const rf=refFor(ex,next),v=verdict(ex,next);t+=`• **${ex.nome}** — ${ex.sets}×${ex.repMin}–${ex.repMax}${ex.tipo==='iso-tempo'?'s':''}, RIR ${ex.rir}${rf?` · ref ${rf}${ex.tipo==='iso-tempo'?'s':'kg'}`:''}${v.type==='up'?` → ${v.txt}`:''}${ex.alerta?` ⚠️ ${ex.alerta}`:''}\n`;});t+=`\nReporta as séries juntas (peso×reps) que eu registro, ou toca em cada exercício na aba **Hoje**.`;return t;}
   if(/progresso|evolu|como (estou|vou)/.test(q)){const fin=S.sessions.filter(s=>s.finished);let ready=0;CICLO.forEach(l=>PROGRAMA[l].exercicios.forEach(ex=>{if(verdict(ex,l).type==="up")ready++;}));const sonos=[...S.diary].filter(d=>d.sonoPont!=null).map(d=>d.sonoPont);return`**Panorama**\n• Sessões no app: ${fin.length}\n• Prontos p/ subir carga: **${ready}**\n• Sono recente: ${sonos.slice(-3).join(", ")} — ${sonos.slice(-3).some(x=>x<50)?"ainda instável, seu maior limitador agora":"melhorando"}.\n\nAbra a aba **Progresso** e toque em cada indicador pra ver a curva.`;}
   if(/subir|carga/.test(q)){let ups=[];CICLO.forEach(l=>PROGRAMA[l].exercicios.forEach(ex=>{const v=verdict(ex,l);if(v.type==="up")ups.push(`${l}: ${ex.nome} → ${v.txt}`);}));return ups.length?("**Prontos p/ subir carga:**\n• "+ups.join("\n• ")):"Ainda sem registros suficientes no app. Finalize um treino que eu calculo a dupla progressão.";}
-  return`Posso: **leitura do dia**, **treino de hoje** com cargas, **seu progresso** e **o que subir**. Anexe o print do sono 📎 (precisa do Gemini ativo). Para conversa completa lendo todo o histórico, ative o Gemini grátis em Ajustes.`;}
+  return`Posso: **leitura do dia**, **treino de hoje** com cargas, **seu progresso** e **o que subir**. Anexe os prints do sono 📎 — pode mandar os dois de uma vez (precisa do Gemini ativo). Para conversa completa lendo todo o histórico, ative o Gemini grátis em Ajustes.`;}
 /* Modelos tentados em ordem — o Google muda cotas do plano gratuito com o tempo.
    O que funcionar é memorizado em S.settings.geminiModel para as próximas chamadas. */
 const GEMINI_MODELS=["gemini-flash-lite-latest","gemini-flash-latest","gemini-2.5-flash","gemini-2.0-flash-lite","gemini-2.0-flash"];
@@ -735,16 +735,33 @@ document.getElementById("chatText").addEventListener("keydown",e=>{if(e.key==="E
 async function sendChat(){const el=document.getElementById("chatText");const q=el.value.trim();if(!q)return;el.value="";addChat("user",q);const log=document.getElementById("chatLog");const tmp=document.createElement("div");tmp.className="msg bot";tmp.textContent="…";log.appendChild(tmp);log.scrollTop=log.scrollHeight;const ans=await coachReply(q);tmp.remove();addChat("bot",ans);}
 // anexar print do sono
 document.getElementById("attachBtn").onclick=()=>document.getElementById("imgFile").click();
-document.getElementById("imgFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>handleImage(rd.result,f.type);rd.readAsDataURL(f);e.target.value="";};
-async function handleImage(dataUrl,mime){addChat("user","(print do sono anexado)",dataUrl);if(!S.settings.geminiKey){addChat("bot","Para eu **ler o print automaticamente** preciso do Gemini ativo (grátis, em Ajustes). Sem ele, me diga os números: pontuação, recuperação física %, ciclos, sono profundo (min) e REM (min) — eu registro no diário.");return;}
-  const log=document.getElementById("chatLog");const tmp=document.createElement("div");tmp.className="msg bot";tmp.textContent="Lendo o print…";log.appendChild(tmp);log.scrollTop=log.scrollHeight;
-  const b64=dataUrl.split(",")[1];const prompt=`Extraia deste print de app de sono (Samsung Health) os campos e responda APENAS um JSON válido, sem texto extra, com as chaves (use null se ausente): {"sonoPont":num,"recFisica":num,"recMental":num,"descanso":num,"ciclos":num,"profundoMin":num,"remMin":num,"acordadoMin":num,"leveMin":num,"spo2":num}. Converta horas:min em minutos.`;
-  try{const g=await geminiCall({contents:[{role:"user",parts:[{text:prompt},{inline_data:{mime_type:mime,data:b64}}]}]});
-    let txt=g.texto||"";const mt=txt.match(/\{[\s\S]*\}/);tmp.remove();
-    if(!mt){addChat("bot","Não consegui ler o print. "+(g.erro||"Tente um print mais nítido ou digite os números."));return;}
-    const data=JSON.parse(mt[0]);const e={data:todayISO()};["sonoPont","recFisica","recMental","ciclos","profundoMin","remMin"].forEach(k=>{if(data[k]!=null)e[k]=Number(data[k]);});mergeDiary(e);renderDiaryHist();renderToday();renderProgress();
-    const r=readiness();addChat("bot",`**Print lido e diário atualizado ✔**\n💤 Pontuação ${data.sonoPont??'—'} · 🔋 Rec. física ${data.recFisica??'—'}% · 🔁 ${data.ciclos??'—'} ciclos · 🌙 Profundo ${data.profundoMin??'—'}min · 👁️ REM ${data.remMin??'—'}min\n\n**Leitura:** ${r.title}. ${r.msg}`);toast("Sono registrado ✔");
-  }catch(err){tmp.remove();addChat("bot","Erro ao contatar a IA. Verifique a chave em Ajustes ou digite os números manualmente.");}}
+document.getElementById("imgFile").onchange=async e=>{
+  const fs=[...e.target.files].filter(f=>f.type.startsWith("image/")).slice(0,4);
+  e.target.value="";if(!fs.length)return;
+  const imgs=await Promise.all(fs.map(f=>new Promise(res=>{const rd=new FileReader();rd.onload=()=>res({dataUrl:rd.result,mime:f.type});rd.onerror=()=>res(null);rd.readAsDataURL(f);})));
+  handleImages(imgs.filter(Boolean));
+};
+async function handleImages(imgs){
+  if(!imgs.length)return;
+  const n=imgs.length;
+  addChat("user",n===1?"(print do sono anexado)":`(${n} prints do sono anexados)`,imgs[0].dataUrl);
+  if(!S.settings.geminiKey){addChat("bot","Para eu **ler os prints automaticamente** preciso do Gemini ativo (grátis, em Ajustes). Sem ele, me diga os números: pontuação, recuperação física %, ciclos, sono profundo (min) e REM (min) — eu registro no diário.");return;}
+  const log=document.getElementById("chatLog");const tmp=document.createElement("div");tmp.className="msg bot";tmp.textContent=n===1?"Lendo o print…":`Lendo os ${n} prints…`;log.appendChild(tmp);log.scrollTop=log.scrollHeight;
+  const prompt=`As imagens a seguir são ${n===1?"um print":`${n} prints`} do MESMO relatório de sono (Samsung Health) — telas diferentes da mesma noite (ex.: pontuação/fatores e fases do sono). Combine os dados de TODAS elas em um único resultado; se um campo aparecer em mais de uma imagem, use o valor mais específico. Responda APENAS um JSON válido, sem texto extra, com as chaves (use null quando o campo não aparecer em nenhuma imagem): {"sonoPont":num,"recFisica":num,"recMental":num,"descanso":num,"ciclos":num,"profundoMin":num,"remMin":num,"acordadoMin":num,"leveMin":num,"spo2":num}. Converta horas:min em minutos (ex.: 1h12 = 72).`;
+  try{
+    const parts=[{text:prompt},...imgs.map(im=>({inline_data:{mime_type:im.mime,data:im.dataUrl.split(",")[1]}}))];
+    const g=await geminiCall({contents:[{role:"user",parts}]});
+    const mt=(g.texto||"").match(/\{[\s\S]*\}/);tmp.remove();
+    if(!mt){addChat("bot","Não consegui ler "+(n===1?"o print":"os prints")+". "+(g.erro||"Tente prints mais nítidos ou digite os números."));return;}
+    const data=JSON.parse(mt[0]);const e={data:todayISO()};
+    ["sonoPont","recFisica","recMental","ciclos","profundoMin","remMin"].forEach(k=>{if(data[k]!=null)e[k]=Number(data[k]);});
+    if(Object.keys(e).length===1){addChat("bot","Li "+(n===1?"a imagem":"as imagens")+", mas não encontrei nenhum dado de sono reconhecível. Confira se são as telas de sono do Samsung Health, ou digite os números no Diário.");return;}
+    mergeDiary(e);renderDiaryHist();renderToday();renderProgress();
+    const r=readiness();
+    addChat("bot",`**${n===1?"Print":`${n} prints`} lido${n===1?"":"s"} e diário atualizado ✔**\n💤 Pontuação ${data.sonoPont??'—'} · 🔋 Rec. física ${data.recFisica??'—'}% · 🧠 Rec. mental ${data.recMental??'—'}% · 🔁 ${data.ciclos??'—'} ciclos · 🌙 Profundo ${data.profundoMin??'—'}min · 👁️ REM ${data.remMin??'—'}min\n\n**Leitura:** ${r.title}. ${r.msg}`);
+    toast("Sono registrado ✔");
+  }catch(err){tmp.remove();addChat("bot","Erro ao contatar a IA. Verifique a chave em Ajustes ou digite os números manualmente.");}
+}
 async function geminiFood(nome,g){try{const r=await geminiCall({contents:[{role:"user",parts:[{text:`Estime os macros de ${g} g de "${nome}". Responda APENAS JSON: {"kcal":num,"prot":num,"carbo":num,"gord":num} (totais para ${g} g).`}]}]});const m=(r.texto||"").match(/\{[\s\S]*\}/);if(!m)return null;const d=JSON.parse(m[0]);return{kcal:Math.round(d.kcal),prot:Math.round(d.prot),carbo:Math.round(d.carbo),gord:Math.round(d.gord)};}catch(e){return null;}}
 
 /* ================= EDITOR DE PROGRAMA ================= */
