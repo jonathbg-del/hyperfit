@@ -99,6 +99,35 @@ main{max-width:640px;margin:0 auto;padding:16px 16px 24px}
 .btn.cool{background:var(--cool);color:#04201c}
 .btn:active{transform:scale(.99)}
 .btn-row{display:flex;gap:10px;margin-top:14px}
+.wtr{display:flex;gap:8px;margin-top:10px}
+.wtr button{flex:1;background:var(--elev);border:1px solid var(--border);color:var(--txt);border-radius:12px;padding:11px 4px;font-size:13px;font-weight:800;cursor:pointer}
+.wtr button:active{transform:scale(.96)}
+.wtr button.undo{flex:0 0 46px;color:var(--muted)}
+.medrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.medrow:last-child{border-bottom:0}
+.medrow .mi{flex:1;min-width:0}
+.medrow .mn{font-weight:800;font-size:14px;display:flex;align-items:center;gap:7px}
+.medrow .ms{font-size:11.5px;color:var(--muted);margin-top:2px}
+.meddot{width:9px;height:9px;border-radius:50%;flex:0 0 9px}
+.medbtn{background:var(--accent-soft);color:var(--accent);border:0;border-radius:10px;padding:9px 13px;font-size:12.5px;font-weight:800;cursor:pointer;white-space:nowrap}
+.medbtn:active{transform:scale(.96)}
+.medbtn.due{background:#FF6A2B;color:#fff}
+.medtag{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:5px 9px;border-radius:9px;background:var(--elev);border:1px solid var(--border);margin:0 6px 6px 0}
+.medtag b{font-weight:800}
+.exrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.exrow:last-child{border-bottom:0}
+.exrow .xi{flex:1;min-width:0}
+.exrow .xn{font-weight:800;font-size:13.5px}
+.exrow .xs{font-size:11.5px;color:var(--muted);margin-top:2px}
+.exval{font-weight:800;font-size:15px;text-align:right;white-space:nowrap;cursor:pointer}
+.exval small{font-size:10.5px;color:var(--muted);font-weight:700}
+.exgrp{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 2px}
+.exflag{display:inline-block;font-size:10px;font-weight:800;padding:2px 6px;border-radius:6px;margin-left:6px}
+.exflag.alto{background:rgba(255,92,92,.16);color:#FF5C5C}
+.exflag.baixo{background:rgba(91,141,239,.16);color:#5B8DEF}
+.exflag.ok{background:rgba(61,220,132,.14);color:#3DDC84}
+.exflag.vnc{background:rgba(245,184,65,.16);color:#F5B841}
+.medtag span.x{color:var(--muted);cursor:pointer;font-weight:900;padding:0 2px}
 
 .vb{font-size:11px;font-weight:800;padding:3px 8px;border-radius:8px;white-space:nowrap}
 .vb.up{color:var(--up);background:var(--up-soft)}
@@ -208,6 +237,7 @@ details pre{background:var(--bg);border:1px solid var(--border);border-radius:10
       <div class="cycle-strip" id="cycleStrip"></div>
       <p class="small muted" id="nextHint" style="margin-top:10px"></p>
     </div>
+    <div class="card" style="margin-top:12px" id="waterCard"></div>
     <div class="section-title">Exercícios · toque para registrar</div>
     <div id="exList"></div>
     <div class="btn-row">
@@ -264,13 +294,35 @@ details pre{background:var(--bg);border:1px solid var(--border);border-radius:10
       <div><label class="f">REM (min)</label><input class="fld tnum" type="number" id="dRem" placeholder="min"></div></div>
       <div class="section-title" style="margin:16px 4px 2px">Corpo &amp; bem-estar</div>
       <div class="row"><div><label class="f">Peso (kg)</label><input class="fld tnum" type="number" step="0.1" id="dPeso"></div>
-      <div><label class="f">Cardio (min)</label><input class="fld tnum" type="number" id="dCardio"></div></div>
+      <div><label class="f">Cardio (min)</label><input class="fld tnum" type="number" id="dCardio"></div>
+      <div><label class="f">Água (ml)</label><input class="fld tnum" type="number" step="50" id="dAgua" placeholder="ml"></div></div>
       <div class="row"><div><label class="f">Humor 1–5</label><input class="fld tnum" type="number" min="1" max="5" id="dHumor"></div>
       <div><label class="f">Energia 1–5</label><input class="fld tnum" type="number" min="1" max="5" id="dEnergia"></div>
       <div><label class="f">Ansiedade 1–5</label><input class="fld tnum" type="number" min="1" max="5" id="dAnsi"></div></div>
       <label class="f">Observações</label>
       <textarea class="fld" id="dObs" rows="2" style="text-align:left" placeholder="Estado do dia, alimentação, sintomas..."></textarea>
       <button class="btn" id="saveDiary" style="margin-top:14px">Salvar no diário</button>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:17px;margin-bottom:2px">Medicação &amp; aplicações</h2>
+      <p class="small muted">Toque em <b>Aplicar</b> para registrar na data escolhida acima. O app conta os dias desde a última e sugere o próximo local de aplicação.</p>
+      <div id="medList" style="margin-top:10px"></div>
+      <div id="medHoje" style="margin-top:12px"></div>
+      <div class="btn-row">
+        <button class="btn secondary" id="medAddBtn">＋ Novo medicamento</button>
+        <button class="btn secondary" id="medHistBtn">Histórico</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:17px;margin-bottom:2px">Exames &amp; marcadores</h2>
+      <p class="small muted">Toque no valor para registrar um resultado novo ou ver a evolução. As faixas são referências gerais — <b>valem as do laudo do seu laboratório e a leitura da sua médica</b>.</p>
+      <div id="examesList" style="margin-top:4px"></div>
+      <div class="btn-row">
+        <button class="btn secondary" id="exAddBtn">＋ Novo marcador</button>
+        <button class="btn secondary" id="exPainelBtn">Painel p/ consulta</button>
+      </div>
     </div>
     <div class="section-title">Histórico</div>
     <div class="hist" id="diaryHist"></div>
@@ -328,6 +380,7 @@ details pre{background:var(--bg);border:1px solid var(--border);border-radius:10
       <button class="btn" id="xlsBtn">⤓ Baixar base histórica (Excel)</button>
       <p class="small muted" style="margin-top:6px">Arquivo .xls com abas: Diário, Treinos, Séries e Refeições.</p>
       <div class="btn-row"><button class="btn secondary" id="expBtn">Exportar JSON</button><button class="btn secondary" id="impBtn">Importar JSON</button></div>
+      <p class="small muted" id="usoArmz" style="margin-top:8px"></p>
       <input type="file" id="impFile" accept="application/json" hidden>
       <button class="btn secondary" id="clearHistBtn" style="margin-top:10px">↺ Zerar histórico e recomeçar</button>
       <p class="small muted" style="margin-top:6px">Apaga treinos, diário, refeições e conversa — <b>mantém seus exercícios</b>. Começa do zero a partir de agora.</p>
@@ -508,16 +561,363 @@ const FIREBASE_DEFAULT={
   messagingSenderId:"418788759146",
   appId:"1:418788759146:web:94362694bbf94ae4fe9c13"
 };
-function freshState(){return {sessions:[],diary:JSON.parse(JSON.stringify(DIARIO_SEED)),meals:[],chat:[],program:JSON.parse(JSON.stringify(PROGRAMA_DEFAULT)),settings:{geminiKey:"",theme:"dark",nutriMeta:{...META_DEFAULT},progPeriod:{gran:"dia",start:"",end:""}},draft:null};}
+/* Catálogo de medicação — editável pelo app (Diário > Novo medicamento).
+   dosePadrao fica em branco: é preenchido na primeira aplicação e memorizado. */
+const MEDS_DEFAULT=[
+ {id:"m_dura", nome:"Durateston", dosePadrao:null, unidade:"mg", via:"IM", freqDias:7, cor:"#FF6A2B", ativo:true},
+ {id:"m_mast", nome:"Masteron",   dosePadrao:null, unidade:"mg", via:"IM", freqDias:3, cor:"#8B7CF6", ativo:true}
+];
+const LOCAIS_IM=["Glúteo D","Glúteo E","Ventroglúteo D","Ventroglúteo E","Deltoide D","Deltoide E","Coxa D","Coxa E"];
+const AGUA_META_DEFAULT=3500;
+/* Marcadores de acompanhamento. min/max são faixas de referência ADULTO MASCULINO,
+   genéricas e apenas orientativas — cada laboratório publica a sua no laudo.
+   Tudo editável no app (Diário > Exames). */
+const EXAMES_DEFAULT=[
+ {id:"x_ht",   nome:"Hematócrito",        unidade:"%",     min:40,  max:52,  freqDias:90,  grupo:"Sangue"},
+ {id:"x_hb",   nome:"Hemoglobina",        unidade:"g/dL",  min:13.5,max:17.5,freqDias:90,  grupo:"Sangue"},
+ {id:"x_pas",  nome:"Pressão sistólica",  unidade:"mmHg",  min:90,  max:130, freqDias:7,   grupo:"Cardiovascular"},
+ {id:"x_pad",  nome:"Pressão diastólica", unidade:"mmHg",  min:60,  max:85,  freqDias:7,   grupo:"Cardiovascular"},
+ {id:"x_ldl",  nome:"LDL",                unidade:"mg/dL", min:null,max:130, freqDias:90,  grupo:"Cardiovascular"},
+ {id:"x_hdl",  nome:"HDL",                unidade:"mg/dL", min:40,  max:null,freqDias:90,  grupo:"Cardiovascular"},
+ {id:"x_tg",   nome:"Triglicérides",      unidade:"mg/dL", min:null,max:150, freqDias:90,  grupo:"Cardiovascular"},
+ {id:"x_tgp",  nome:"TGP / ALT",          unidade:"U/L",   min:7,   max:56,  freqDias:90,  grupo:"Fígado & rim"},
+ {id:"x_tgo",  nome:"TGO / AST",          unidade:"U/L",   min:10,  max:40,  freqDias:90,  grupo:"Fígado & rim"},
+ {id:"x_ggt",  nome:"Gama GT",            unidade:"U/L",   min:8,   max:61,  freqDias:90,  grupo:"Fígado & rim"},
+ {id:"x_creat",nome:"Creatinina",         unidade:"mg/dL", min:0.7, max:1.3, freqDias:90,  grupo:"Fígado & rim"},
+ {id:"x_test", nome:"Testosterona total", unidade:"ng/dL", min:264, max:916, freqDias:90,  grupo:"Hormônios"},
+ {id:"x_e2",   nome:"Estradiol",          unidade:"pg/mL", min:11,  max:44,  freqDias:90,  grupo:"Hormônios"},
+ {id:"x_psa",  nome:"PSA total",          unidade:"ng/mL", min:null,max:2.5, freqDias:180, grupo:"Hormônios"}
+];
+function freshState(){return {sessions:[],diary:JSON.parse(JSON.stringify(DIARIO_SEED)),meals:[],chat:[],program:JSON.parse(JSON.stringify(PROGRAMA_DEFAULT)),settings:{geminiKey:"",theme:"dark",nutriMeta:{...META_DEFAULT},progPeriod:{gran:"dia",start:"",end:""},medsCatalogo:JSON.parse(JSON.stringify(MEDS_DEFAULT)),aguaMetaMl:AGUA_META_DEFAULT,examesCatalogo:JSON.parse(JSON.stringify(EXAMES_DEFAULT))},exames:[],draft:null};}
 let S=load();
 if(!S.program)S.program=JSON.parse(JSON.stringify(PROGRAMA_DEFAULT));
 let PROGRAMA=S.program;
 function load(){let s;try{const r=localStorage.getItem(KEY);s=r?Object.assign(freshState(),JSON.parse(r)):freshState();s.settings=Object.assign({nutriMeta:{...META_DEFAULT}},s.settings);if(!s.settings.nutriMeta)s.settings.nutriMeta={...META_DEFAULT};}catch(e){s=freshState();}
   // aparelho novo já vem com a config do Firebase — só falta entrar com o Google
   if(!s.settings.firebase||!s.settings.firebase.apiKey)s.settings.firebase={...FIREBASE_DEFAULT};
+  // migração: bases antigas não tinham catálogo de medicação nem meta de água
+  if(!Array.isArray(s.settings.medsCatalogo))s.settings.medsCatalogo=JSON.parse(JSON.stringify(MEDS_DEFAULT));
+  if(!s.settings.aguaMetaMl)s.settings.aguaMetaMl=AGUA_META_DEFAULT;
+  if(!Array.isArray(s.settings.examesCatalogo))s.settings.examesCatalogo=JSON.parse(JSON.stringify(EXAMES_DEFAULT));
+  if(!Array.isArray(s.exames))s.exames=[];
+  // Bases antigas guardavam o print inteiro no chat e estouravam a cota do navegador,
+  // fazendo o app perder o treino do dia. Mantém só as 4 imagens mais recentes.
+  if(Array.isArray(s.chat)){
+    const comImg=s.chat.map((m,i)=>m&&m.img?i:-1).filter(i=>i>=0);
+    if(comImg.length>4)comImg.slice(0,comImg.length-4).forEach(i=>{delete s.chat[i].img;});
+    if(s.chat.length>60)s.chat=s.chat.slice(-60);
+  }
+  s.diary.forEach(d=>{if(d.meds&&!Array.isArray(d.meds))delete d.meds;});
   return s;}
-function save(silent){S.updatedAt=Date.now();localStorage.setItem(KEY,JSON.stringify(S));if(!silent&&typeof cloudAutoPush==="function")cloudAutoPush();}
+/* Remove as imagens mais antigas do chat (a maior fonte de peso no armazenamento).
+   Devolve quantas foram removidas. */
+function podarImagensChat(manter){
+  manter=manter||0;
+  const comImg=S.chat.map((m,i)=>m.img?i:-1).filter(i=>i>=0);
+  const alvo=comImg.slice(0,Math.max(0,comImg.length-manter));
+  alvo.forEach(i=>{delete S.chat[i].img;});
+  return alvo.length;
+}
+/* Descarta as mensagens mais antigas do chat, mantendo as últimas N. */
+function podarChat(manter){
+  manter=manter||40;
+  if(S.chat.length<=manter)return 0;
+  const cortadas=S.chat.length-manter;
+  S.chat=S.chat.slice(-manter);
+  return cortadas;
+}
+let avisouQuota=false;
+/* Salva no armazenamento local. Se estourar a cota, libera espaço automaticamente
+   e tenta de novo — nunca falha em silêncio, porque isso apagava o treino do dia. */
+function save(silent){
+  S.updatedAt=Date.now();
+  for(let tentativa=0;tentativa<4;tentativa++){
+    try{
+      localStorage.setItem(KEY,JSON.stringify(S));
+      if(!silent&&typeof cloudAutoPush==="function")cloudAutoPush();
+      return true;
+    }catch(e){
+      const cota=e&&(e.name==="QuotaExceededError"||e.name==="NS_ERROR_DOM_QUOTA_REACHED"||e.code===22||e.code===1014);
+      if(!cota){console.error("Falha ao salvar:",e);if(typeof toast==="function")toast("Erro ao salvar — "+(e.message||"desconhecido"));return false;}
+      // libera espaço, do menos doloroso para o mais
+      if(tentativa===0){podarImagensChat(0);continue;}
+      if(tentativa===1){podarChat(40);continue;}
+      if(tentativa===2){podarChat(10);continue;}
+      console.error("Armazenamento cheio mesmo após limpeza.");
+      if(typeof toast==="function")toast("⚠️ Armazenamento cheio — exporte o JSON e limpe o histórico");
+      return false;
+    }
+  }
+  return false;
+}
+/* Quanto do armazenamento o app está ocupando. */
+function usoArmazenamento(){
+  try{const b=JSON.stringify(S).length;return{bytes:b,mb:+(b/1048576).toFixed(2)};}
+  catch(e){return{bytes:0,mb:0};}
+}
 const META=()=>S.settings.nutriMeta||META_DEFAULT;
+const AGUA_META=()=>S.settings.aguaMetaMl||AGUA_META_DEFAULT;
+const MEDS=()=>S.settings.medsCatalogo||(S.settings.medsCatalogo=JSON.parse(JSON.stringify(MEDS_DEFAULT)));
+function diaryFor(iso){let d=S.diary.find(x=>x.data===iso);if(!d){d={data:iso};S.diary.push(d);}return d;}
+function addAgua(ml){const d=diaryFor(todayISO());d.aguaMl=Math.max(0,(+d.aguaMl||0)+ml);save();renderWater();renderDiaryHist();if(typeof renderProgress==="function"&&document.getElementById("view-prog").classList.contains("active"))renderProgress();}
+/* ---------- exames & marcadores ---------- */
+const EXAMES=()=>S.settings.examesCatalogo||(S.settings.examesCatalogo=JSON.parse(JSON.stringify(EXAMES_DEFAULT)));
+function exResultados(examId){return S.exames.filter(r=>r.examId===examId).sort((a,b)=>a.data<b.data?-1:1);}
+function exStatus(x,valor){
+  if(valor==null)return null;
+  if(x.max!=null&&valor>x.max)return"alto";
+  if(x.min!=null&&valor<x.min)return"baixo";
+  return"ok";
+}
+function exFaixa(x){
+  if(x.min!=null&&x.max!=null)return`${x.min}–${x.max} ${x.unidade||""}`;
+  if(x.max!=null)return`até ${x.max} ${x.unidade||""}`;
+  if(x.min!=null)return`acima de ${x.min} ${x.unidade||""}`;
+  return"sem faixa definida";
+}
+function exCor(st){return st==="alto"?"#FF5C5C":st==="baixo"?"#5B8DEF":"#3DDC84";}
+function renderExames(){
+  const cont=document.getElementById("examesList");if(!cont)return;
+  const hoje=todayISO();
+  const grupos=[];
+  EXAMES().forEach(x=>{if(!grupos.includes(x.grupo||"Outros"))grupos.push(x.grupo||"Outros");});
+  cont.innerHTML=grupos.map(g=>{
+    const linhas=EXAMES().filter(x=>(x.grupo||"Outros")===g).map(x=>{
+      const rs=exResultados(x.id);const u=rs.length?rs[rs.length-1]:null;
+      const st=u?exStatus(x,u.valor):null;
+      const dias=u?diasEntre(u.data,hoje):null;
+      const venc=x.freqDias&&(!u||dias>=x.freqDias);
+      let sub;
+      if(!u)sub=`Sem registro · ref. ${exFaixa(x)}`;
+      else{
+        const ant=rs.length>1?rs[rs.length-2]:null;
+        const delta=ant?(u.valor-ant.valor):null;
+        sub=`${fmtDate(u.data)} · ${dias===0?"hoje":"há "+dias+"d"} · ref. ${exFaixa(x)}`
+          +(delta!=null?` · ${delta>0?"▲":delta<0?"▼":"="}${Math.abs(+delta.toFixed(2))}`:"");
+      }
+      return `<div class="exrow">
+        <div class="xi"><div class="xn">${esc(x.nome)}${st?`<span class="exflag ${st}">${st==="ok"?"ok":st}</span>`:""}${venc?`<span class="exflag vnc">refazer</span>`:""}</div>
+          <div class="xs">${sub}</div></div>
+        <div class="exval" data-ex="${x.id}" style="color:${u?exCor(st):"var(--muted)"}">${u?u.valor:"—"} <small>${esc(x.unidade||"")}</small></div>
+      </div>`;
+    }).join("");
+    return `<div class="exgrp">${esc(g)}</div>${linhas}`;
+  }).join("");
+  cont.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>abrirExame(b.dataset.ex));
+}
+function abrirExame(examId){
+  const x=EXAMES().find(e=>e.id===examId);if(!x)return;
+  const rs=exResultados(examId);
+  const hist=rs.length?rs.slice(-10).reverse().map(r=>{const st=exStatus(x,r.valor);return `${fmtDate(r.data)}  ${r.valor} ${x.unidade||""}  ${st==="ok"?"✓":st==="alto"?"▲ acima":"▼ abaixo"}`;}).join("\n"):"(sem resultados)";
+  const op=prompt(`${x.nome} — referência ${exFaixa(x)}\n\nÚltimos resultados:\n${hist}\n\nDigite:\n  um NÚMERO para registrar resultado novo\n  E para editar o marcador\n  X para apagar o último resultado`,"");
+  if(op===null||!op.trim())return;
+  const t=op.trim().toUpperCase();
+  if(t==="E")return editarExame(examId);
+  if(t==="X"){
+    if(!rs.length){toast("Nada para apagar");return;}
+    const ult=rs[rs.length-1];
+    if(confirm(`Apagar ${x.nome} ${ult.valor} de ${fmtDate(ult.data)}?`)){
+      const i=S.exames.findIndex(r=>r===ult);if(i>=0)S.exames.splice(i,1);
+      save();renderExames();toast("Resultado removido");
+    }
+    return;
+  }
+  const v=parseFloat(t.replace(",","."));
+  if(!isFinite(v)){toast("Valor inválido");return;}
+  const dataSug=medDiaSel();
+  const dt=prompt(`Data da coleta (AAAA-MM-DD):`,dataSug);
+  if(dt===null)return;
+  const iso=/^\d{4}-\d{2}-\d{2}$/.test(dt.trim())?dt.trim():dataSug;
+  S.exames.push({examId,data:iso,valor:v});
+  save();renderExames();
+  const st=exStatus(x,v);
+  toast(`${x.nome} registrado ✔`);
+  if(st!=="ok")setTimeout(()=>alert(`${x.nome}: ${v} ${x.unidade||""}\n\nEstá ${st==="alto"?"ACIMA":"ABAIXO"} da faixa de referência (${exFaixa(x)}).\n\nLeve o laudo para a sua médica avaliar — o app só sinaliza, quem interpreta é ela.`),260);
+}
+function editarExame(examId){
+  const list=EXAMES();const i=list.findIndex(e=>e.id===examId);if(i<0)return;const x=list[i];
+  const nome=prompt("Nome do marcador (vazio = EXCLUIR do painel):",x.nome);
+  if(nome===null)return;
+  if(!nome.trim()){
+    if(confirm(`Remover "${x.nome}" do painel? Os resultados já registrados são mantidos.`)){list.splice(i,1);save();renderExames();toast("Removido do painel");}
+    return;
+  }
+  x.nome=nome.trim();
+  const un=prompt("Unidade:",x.unidade||"");if(un!==null)x.unidade=un.trim();
+  const mn=prompt("Mínimo da referência (vazio = sem mínimo):",x.min??"");
+  if(mn!==null){const n=parseFloat(String(mn).replace(",","."));x.min=isFinite(n)?n:null;}
+  const mx=prompt("Máximo da referência (vazio = sem máximo):",x.max??"");
+  if(mx!==null){const n=parseFloat(String(mx).replace(",","."));x.max=isFinite(n)?n:null;}
+  const fq=prompt("Refazer a cada quantos dias? (0 = sem lembrete)",x.freqDias||0);
+  if(fq!==null){const n=parseInt(fq,10);x.freqDias=n>0?n:null;}
+  const gp=prompt("Grupo (Sangue, Cardiovascular, Fígado & rim, Hormônios, Outros):",x.grupo||"Outros");
+  if(gp!==null)x.grupo=gp.trim()||"Outros";
+  save();renderExames();toast("Marcador atualizado ✔");
+}
+function novoExame(){
+  const nome=prompt("Nome do marcador:");if(!nome||!nome.trim())return;
+  const un=prompt("Unidade (ex.: mg/dL):","")||"";
+  const mn=prompt("Mínimo da referência (vazio = sem mínimo):","");
+  const mx=prompt("Máximo da referência (vazio = sem máximo):","");
+  const fq=prompt("Refazer a cada quantos dias? (0 = sem lembrete)","90");
+  const gp=prompt("Grupo:","Outros")||"Outros";
+  const nmn=parseFloat(String(mn).replace(",",".")),nmx=parseFloat(String(mx).replace(",","."));
+  EXAMES().push({id:"x_"+Date.now().toString(36),nome:nome.trim(),unidade:un.trim(),
+    min:isFinite(nmn)?nmn:null,max:isFinite(nmx)?nmx:null,
+    freqDias:parseInt(fq,10)>0?parseInt(fq,10):null,grupo:gp.trim()});
+  save();renderExames();toast("Marcador adicionado ✔");
+}
+/* Resumo pronto para levar impresso ou ler na consulta. */
+function painelConsulta(){
+  const hoje=todayISO();
+  const L=["PAINEL HYPERFIT — "+fmtDate(hoje),""];
+  const meds=MEDS().filter(m=>m.ativo!==false);
+  L.push("MEDICAÇÃO EM CURSO");
+  meds.forEach(m=>{const ap=medAplicacoes(m.id);const u=ap.length?ap[ap.length-1]:null;
+    L.push(` • ${m.nome} ${m.dosePadrao?m.dosePadrao+(m.unidade||""):""}${m.freqDias?" a cada "+m.freqDias+"d":""} — ${u?"última "+fmtDate(u.data)+" ("+u.local+"), "+ap.length+" aplicações registradas":"sem registro"}`);});
+  if(!meds.length)L.push(" (nenhuma)");
+  L.push("","EXAMES — ÚLTIMO RESULTADO");
+  EXAMES().forEach(x=>{const rs=exResultados(x.id);const u=rs.length?rs[rs.length-1]:null;
+    if(!u){L.push(` • ${x.nome}: sem registro (ref. ${exFaixa(x)})`);return;}
+    const st=exStatus(x,u.valor);
+    L.push(` • ${x.nome}: ${u.valor} ${x.unidade||""} em ${fmtDate(u.data)} ${st==="ok"?"[ok]":st==="alto"?"[ACIMA de "+x.max+"]":"[ABAIXO de "+x.min+"]"}`);});
+  const sono=S.diary.filter(d=>d.sonoPont!=null).slice(-10);
+  if(sono.length){
+    const med=Math.round(sono.reduce((a,d)=>a+d.sonoPont,0)/sono.length);
+    L.push("","SONO (últimos "+sono.length+" registros)");
+    L.push(` • Pontuação média ${med} · valores: ${sono.map(d=>d.sonoPont).join(", ")}`);
+  }
+  const pesos=S.diary.filter(d=>d.pesoKg).slice(-2);
+  if(pesos.length)L.push("","PESO"," • "+pesos.map(d=>fmtDate(d.data)+": "+d.pesoKg+"kg").join(" → "));
+  const txt=L.join("\n");
+  const blob=new Blob([txt],{type:"text/plain;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="HyperFit_painel_"+hoje+".txt";a.click();
+  toast("Painel baixado ✔");
+}
+/* ---------- medicação ---------- */
+function medDiaSel(){const el=document.getElementById("dData");return (el&&el.value)||todayISO();}
+function medAplicacoes(medId){
+  const out=[];
+  S.diary.forEach(d=>{(d.meds||[]).forEach(a=>{if(a.medId===medId)out.push({...a,data:d.data});});});
+  return out.sort((a,b)=>a.data<b.data?-1:1);
+}
+function diasEntre(isoA,isoB){return Math.round((new Date(isoB+"T12:00")-new Date(isoA+"T12:00"))/86400000);}
+function proxLocal(medId){
+  const ap=medAplicacoes(medId);if(!ap.length)return LOCAIS_IM[0];
+  const ult=ap[ap.length-1].local;const i=LOCAIS_IM.indexOf(ult);
+  return i<0?LOCAIS_IM[0]:LOCAIS_IM[(i+1)%LOCAIS_IM.length];
+}
+function medTotalMes(medId){
+  const ini=todayISO().slice(0,7);
+  return medAplicacoes(medId).filter(a=>a.data.slice(0,7)===ini).reduce((t,a)=>t+(+a.dose||0),0);
+}
+function renderMeds(){
+  const cont=document.getElementById("medList");if(!cont)return;
+  const hoje=todayISO(),sel=medDiaSel();
+  cont.innerHTML=MEDS().filter(m=>m.ativo!==false).map(m=>{
+    const ap=medAplicacoes(m.id);
+    const ult=ap.length?ap[ap.length-1]:null;
+    const dias=ult?diasEntre(ult.data,hoje):null;
+    const vencida=ult&&m.freqDias&&dias>=m.freqDias;
+    let sub;
+    if(!ult)sub="Nunca registrada — a primeira aplicação define a dose padrão.";
+    else{
+      const tot=medTotalMes(m.id);
+      sub=`Última: ${fmtDate(ult.data)} (${dias===0?"hoje":dias===1?"há 1 dia":"há "+dias+" dias"}) · ${ult.dose||"?"}${m.unidade||""} · ${ult.local||m.via||""}`
+        +(tot?` · mês: ${tot}${m.unidade||""}`:"");
+    }
+    return `<div class="medrow">
+      <span class="meddot" style="background:${m.cor||"#888"}"></span>
+      <div class="mi"><div class="mn" data-edit="${m.id}" style="cursor:pointer">${esc(m.nome)} <span class="chip">${m.via||"IM"}${m.freqDias?" · "+m.freqDias+"/"+m.freqDias+"d":""}</span></div>
+        <div class="ms">${sub}</div></div>
+      <button class="medbtn ${vencida?"due":""}" data-ap="${m.id}">${vencida?"Vencida · Aplicar":"Aplicar"}</button>
+    </div>`;
+  }).join("")||`<p class="small muted">Nenhum medicamento cadastrado. Toque em <b>＋ Novo medicamento</b>.</p>`;
+  cont.querySelectorAll("[data-ap]").forEach(b=>b.onclick=()=>registrarMed(b.dataset.ap));
+  cont.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>editarMed(b.dataset.edit));
+  // aplicações registradas na data selecionada
+  const box=document.getElementById("medHoje");
+  const d=S.diary.find(x=>x.data===sel);const aps=(d&&d.meds)||[];
+  box.innerHTML=aps.length
+    ? `<div class="small muted" style="margin-bottom:6px">Registrado em ${fmtDate(sel)}:</div>`
+      +aps.map((a,i)=>{const m=MEDS().find(x=>x.id===a.medId);
+        return `<span class="medtag"><span class="meddot" style="background:${(m&&m.cor)||"#888"}"></span><b>${esc(a.nome)}</b> ${a.dose||"?"}${a.unidade||""} · ${esc(a.local||"")} <span class="x" data-del="${i}">×</span></span>`;}).join("")
+    : `<div class="small muted">Nenhuma aplicação registrada em ${fmtDate(sel)}.</div>`;
+  box.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
+    const dd=S.diary.find(x=>x.data===sel);if(!dd||!dd.meds)return;
+    dd.meds.splice(+b.dataset.del,1);if(!dd.meds.length)delete dd.meds;save();renderMeds();renderDiaryHist();toast("Aplicação removida");
+  });
+}
+function registrarMed(medId){
+  const m=MEDS().find(x=>x.id===medId);if(!m)return;
+  const sel=medDiaSel();
+  const dose=prompt(`${m.nome} — dose em ${m.unidade||"mg"}:`,m.dosePadrao??"");
+  if(dose===null)return;
+  const dn=parseFloat(String(dose).replace(",","."));
+  if(!(dn>0)){toast("Dose inválida");return;}
+  let local="";
+  if((m.via||"IM")==="IM"){
+    const sug=proxLocal(medId);
+    local=prompt(`Local da aplicação (rodízio sugerido: ${sug}):\n${LOCAIS_IM.join(" · ")}`,sug);
+    if(local===null)return;
+  }else local=m.via||"";
+  const d=diaryFor(sel);
+  if(!Array.isArray(d.meds))d.meds=[];
+  d.meds.push({medId,nome:m.nome,dose:dn,unidade:m.unidade||"mg",via:m.via||"IM",local:(local||"").trim()});
+  if(m.dosePadrao==null)m.dosePadrao=dn;      // memoriza a dose da primeira vez
+  save();renderMeds();renderDiaryHist();toast(m.nome+" registrado ✔");
+}
+function editarMed(medId){
+  const list=MEDS();const i=list.findIndex(x=>x.id===medId);if(i<0)return;const m=list[i];
+  const nome=prompt("Nome do medicamento (deixe vazio para EXCLUIR):",m.nome);
+  if(nome===null)return;
+  if(!nome.trim()){
+    if(confirm(`Excluir "${m.nome}" do catálogo? As aplicações já registradas no diário são mantidas.`)){list.splice(i,1);save();renderMeds();toast("Removido do catálogo");}
+    return;
+  }
+  m.nome=nome.trim();
+  const dose=prompt("Dose padrão (número, vazio = perguntar sempre):",m.dosePadrao??"");
+  if(dose!==null){const dn=parseFloat(String(dose).replace(",","."));m.dosePadrao=dn>0?dn:null;}
+  const un=prompt("Unidade (mg, ml, UI, comprimido):",m.unidade||"mg");if(un!==null)m.unidade=un.trim()||"mg";
+  const via=prompt("Via (IM, SC, Oral, Tópico):",m.via||"IM");if(via!==null)m.via=via.trim()||"IM";
+  const fq=prompt("A cada quantos dias? (0 = sem periodicidade fixa)",m.freqDias||0);
+  if(fq!==null){const fn=parseInt(fq,10);m.freqDias=fn>0?fn:null;}
+  save();renderMeds();toast("Atualizado ✔");
+}
+function novoMed(){
+  const nome=prompt("Nome do medicamento:");if(!nome||!nome.trim())return;
+  const un=prompt("Unidade (mg, ml, UI, comprimido):","mg")||"mg";
+  const via=prompt("Via (IM, SC, Oral, Tópico):","IM")||"IM";
+  const dose=prompt("Dose padrão (número, vazio = perguntar sempre):","");
+  const dn=dose?parseFloat(String(dose).replace(",",".")):NaN;
+  const fq=prompt("A cada quantos dias? (0 = sem periodicidade fixa)","0");
+  const fn=parseInt(fq,10);
+  const cores=["#FF6A2B","#8B7CF6","#35D0BA","#F5B841","#5B8DEF","#FF5C5C","#3DDC84","#C084FC"];
+  MEDS().push({id:"m_"+Date.now().toString(36),nome:nome.trim(),dosePadrao:dn>0?dn:null,unidade:un.trim(),via:via.trim(),freqDias:fn>0?fn:null,cor:cores[MEDS().length%cores.length],ativo:true});
+  save();renderMeds();toast("Medicamento adicionado ✔");
+}
+function medHistorico(){
+  const linhas=[];
+  [...S.diary].sort((a,b)=>a.data<b.data?1:-1).forEach(d=>(d.meds||[]).forEach(a=>linhas.push(`${fmtDate(d.data)} · ${a.nome} ${a.dose||"?"}${a.unidade||""} · ${a.local||a.via||""}`)));
+  alert(linhas.length?("Histórico de aplicações\n\n"+linhas.join("\n")):"Nenhuma aplicação registrada ainda.");
+}
+function renderWater(){
+  const el=document.getElementById("waterCard");if(!el)return;
+  const d=S.diary.find(x=>x.data===todayISO())||{};const ml=+d.aguaMl||0;const meta=AGUA_META();
+  const pct=Math.min(100,ml/meta*100);
+  el.innerHTML=`<div class="k" style="font-size:12px;color:var(--muted);font-weight:700;display:flex;justify-content:space-between">
+      <span>💧 Água hoje</span><span class="small" style="cursor:pointer" id="aguaMetaBtn">meta ${(meta/1000).toFixed(1)} L ✎</span></div>
+    <div class="v tnum" style="font-size:26px;font-weight:800;margin-top:4px">${(ml/1000).toFixed(2)} <small style="font-size:13px;color:var(--muted)">/ ${(meta/1000).toFixed(1)} L</small></div>
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:#38BDF8"></div></div>
+    <div class="wtr">
+      <button data-ml="250">+250</button><button data-ml="500">+500</button><button data-ml="750">+750</button>
+      <button class="undo" data-ml="-250" title="Desfazer 250 ml">↺</button>
+    </div>
+    <div class="small muted" style="margin-top:8px">${ml>=meta?"Meta batida ✔":"Faltam "+((meta-ml)/1000).toFixed(2)+" L"}</div>`;
+  el.querySelectorAll(".wtr button").forEach(b=>b.onclick=()=>addAgua(+b.dataset.ml));
+  const mb=document.getElementById("aguaMetaBtn");
+  if(mb)mb.onclick=()=>{const v=prompt("Meta diária de água em ml:",AGUA_META());if(v===null)return;const n=parseInt(v,10);if(n>0){S.settings.aguaMetaMl=n;save();renderWater();toast("Meta de água atualizada ✔");}};
+}
 
 /* ================= MOTOR ================= */
 function todayISO(){return new Date().toISOString().slice(0,10);}
@@ -543,8 +943,36 @@ function tonnage(s){return s.ex.reduce((a,e)=>a+e.sets.reduce((b,t)=>b+(Number(t
 
 /* ================= HOJE ================= */
 let curLetra=null;
-function initToday(){const sel=document.getElementById("pickWorkout");sel.innerHTML=CICLO.map(l=>`<option value="${l}">${l} · ${PROGRAMA[l].nome}</option>`).join("");curLetra=nextLetter();sel.value=curLetra;sel.onchange=()=>{curLetra=sel.value;S.draft=null;renderToday();};renderToday();}
-function ensureDraft(){if(!S.draft||S.draft.letra!==curLetra){S.draft={letra:curLetra,ex:PROGRAMA[curLetra].exercicios.map(ex=>({nome:ex.nome,sets:Array.from({length:ex.sets},()=>({load:"",reps:"",rir:""}))}))};save();}}
+function initToday(){
+  const sel=document.getElementById("pickWorkout");
+  sel.innerHTML=CICLO.map(l=>`<option value="${l}">${l} · ${PROGRAMA[l].nome}</option>`).join("");
+  // Se há um treino em andamento (rascunho com alguma série preenchida), ele manda —
+  // senão o app perderia o registro do dia só porque o ciclo sugere outra letra.
+  const emAndamento=S.draft&&S.draft.letra&&CICLO.includes(S.draft.letra)&&S.draft.ex&&S.draft.ex.some(e=>e.sets.some(t=>t.reps||t.load));
+  curLetra=emAndamento?S.draft.letra:nextLetter();
+  sel.value=curLetra;
+  sel.onchange=()=>{
+    const temDados=S.draft&&S.draft.ex&&S.draft.ex.some(e=>e.sets.some(t=>t.reps||t.load));
+    if(temDados&&!confirm("Você tem séries registradas neste treino que ainda não foram finalizadas. Trocar de treino vai apagá-las. Continuar?")){sel.value=curLetra;return;}
+    curLetra=sel.value;S.draft=null;renderToday();
+  };
+  renderToday();
+}
+function ensureDraft(){
+  if(S.draft&&S.draft.letra===curLetra){
+    // o programa pode ter mudado desde que o rascunho foi criado — completa o que faltar
+    const alvo=PROGRAMA[curLetra].exercicios;
+    const porNome={};S.draft.ex.forEach(e=>porNome[e.nome]=e);
+    S.draft.ex=alvo.map(ex=>{
+      const at=porNome[ex.nome];
+      if(at){while(at.sets.length<ex.sets)at.sets.push({load:"",reps:"",rir:""});return at;}
+      return{nome:ex.nome,sets:Array.from({length:ex.sets},()=>({load:"",reps:"",rir:""}))};
+    });
+    return;
+  }
+  S.draft={letra:curLetra,ex:PROGRAMA[curLetra].exercicios.map(ex=>({nome:ex.nome,sets:Array.from({length:ex.sets},()=>({load:"",reps:"",rir:""}))}))};
+  save();
+}
 function renderToday(){
   ensureDraft();const w=PROGRAMA[curLetra];
   document.getElementById("nextLetter").textContent=w.letra;
@@ -599,6 +1027,7 @@ const METRICS={
  energia:{label:"Energia",unit:"/5",icon:"⚡",color:"#FBBF24"},
  ansiedade:{label:"Ansiedade",unit:"/5",icon:"😰",color:"#FF5C5C",invert:true},
  pesoKg:{label:"Peso",unit:"kg",icon:"⚖️",color:"#3DDC84"},
+ aguaMl:{label:"Água",unit:"ml",icon:"💧",color:"#38BDF8"},
 };
 /* ---- período global dos gráficos ---- */
 function fmtISOd(dt){return dt.getFullYear()+'-'+('0'+(dt.getMonth()+1)).slice(-2)+'-'+('0'+dt.getDate()).slice(-2);}
@@ -617,8 +1046,8 @@ function renderProgress(){
   initPeriodUI();
   document.getElementById("periodLbl").textContent=periodLabel();
   document.getElementById("sleepCards").innerHTML=["sonoPont","recFisica","ciclos","profundoMin","remMin","recMental"].map(miniCard).join("");
-  document.getElementById("wellCards").innerHTML=["humor","energia","ansiedade"].map(miniCard).join("");
-  ["sonoPont","recFisica","ciclos","profundoMin","remMin","recMental","humor","energia","ansiedade"].forEach(k=>{const s=series(k);sparkline(document.getElementById("mc_"+k),s.map(x=>x.v),METRICS[k].color);});
+  document.getElementById("wellCards").innerHTML=["humor","energia","ansiedade","aguaMl"].map(miniCard).join("");
+  ["sonoPont","recFisica","ciclos","profundoMin","remMin","recMental","humor","energia","ansiedade","aguaMl"].forEach(k=>{const s=series(k);sparkline(document.getElementById("mc_"+k),s.map(x=>x.v),METRICS[k].color);});
   document.querySelectorAll("[data-metric]").forEach(c=>c.onclick=()=>openMetric(c.dataset.metric));
   // tonelagem (por período; soma dentro do bucket)
   const fin=S.sessions.filter(s=>s.finished);const tSeries=applyPeriod(rawTonnage(),'sum');
@@ -665,11 +1094,14 @@ document.getElementById("metricSheet").onclick=e=>{if(e.target.id==="metricSheet
 function initDiary(){document.getElementById("dData").value=todayISO();renderDiaryHist();}
 document.getElementById("saveDiary").onclick=()=>{const g=id=>document.getElementById(id).value;const data=g("dData");if(!data){toast("Escolha a data");return;}
   const num=id=>g(id)?+g(id):null;
-  const e={data,treino:null,sonoPont:num("dSono"),recFisica:num("dRecF"),recMental:num("dRecM"),ciclos:num("dCiclos"),profundoMin:num("dProf"),remMin:num("dRem"),pesoKg:num("dPeso"),cardioMin:num("dCardio"),humor:num("dHumor"),energia:num("dEnergia"),ansiedade:num("dAnsi"),obs:g("dObs")};
-  mergeDiary(e);renderDiaryHist();renderToday();toast("Diário salvo ✔");
-  ["dSono","dRecF","dRecM","dCiclos","dProf","dRem","dPeso","dCardio","dHumor","dEnergia","dAnsi","dObs"].forEach(i=>document.getElementById(i).value="");};
+  const e={data,treino:null,sonoPont:num("dSono"),recFisica:num("dRecF"),recMental:num("dRecM"),ciclos:num("dCiclos"),profundoMin:num("dProf"),remMin:num("dRem"),pesoKg:num("dPeso"),cardioMin:num("dCardio"),aguaMl:num("dAgua"),humor:num("dHumor"),energia:num("dEnergia"),ansiedade:num("dAnsi"),obs:g("dObs")};
+  mergeDiary(e);renderDiaryHist();renderToday();renderWater();renderMeds();renderExames();
+(function(){const el=document.getElementById("usoArmz");if(!el)return;const u=usoArmazenamento();
+  el.textContent=`Armazenamento em uso: ${u.mb} MB (limite do navegador ≈ 5 MB). As imagens antigas do chat são descartadas automaticamente.`;
+  if(u.mb>3.5)el.style.color="#FF6A2B";})();toast("Diário salvo ✔");
+  ["dSono","dRecF","dRecM","dCiclos","dProf","dRem","dPeso","dCardio","dAgua","dHumor","dEnergia","dAnsi","dObs"].forEach(i=>document.getElementById(i).value="");};
 function mergeDiary(e){const ix=S.diary.findIndex(d=>d.data===e.data);if(ix>=0){Object.keys(e).forEach(k=>{if(e[k]!=null&&e[k]!=="")S.diary[ix][k]=e[k];});}else S.diary.push(e);save();}
-function renderDiaryHist(){const dg=[...S.diary].sort((a,b)=>a.data<b.data?1:-1);document.getElementById("diaryHist").innerHTML=dg.map(d=>`<div class="d"><div class="dt tnum">${fmtDate(d.data)}</div><div class="info"><div class="t">${d.treino?("Treino "+d.treino):"—"}${d.sonoPont!=null?` · 💤 ${d.sonoPont}`:""}${d.recFisica!=null?` · 🔋 ${d.recFisica}%`:""}${d.ciclos!=null?` · 🔁 ${d.ciclos}`:""}${d.pesoKg?` · ⚖️ ${d.pesoKg}`:""}</div><div class="o">${d.obs||""}</div></div></div>`).join("");}
+function renderDiaryHist(){const dg=[...S.diary].sort((a,b)=>a.data<b.data?1:-1);document.getElementById("diaryHist").innerHTML=dg.map(d=>`<div class="d"><div class="dt tnum">${fmtDate(d.data)}</div><div class="info"><div class="t">${d.treino?("Treino "+d.treino):"—"}${d.sonoPont!=null?` · 💤 ${d.sonoPont}`:""}${d.recFisica!=null?` · 🔋 ${d.recFisica}%`:""}${d.ciclos!=null?` · 🔁 ${d.ciclos}`:""}${d.pesoKg?` · ⚖️ ${d.pesoKg}`:""}${d.aguaMl?` · 💧 ${(d.aguaMl/1000).toFixed(1)}L`:""}${(d.meds&&d.meds.length)?` · 💉 ${d.meds.map(a=>a.nome+" "+(a.dose||"")+(a.unidade||"")).join(", ")}`:""}</div><div class="o">${d.obs||""}</div></div></div>`).join("");}
 
 /* ================= NUTRIÇÃO ================= */
 function norm(s){return (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();}
@@ -703,7 +1135,29 @@ function renderNutri(){const today=todayISO();const tm=S.meals.filter(m=>m.data=
 }
 
 /* ================= COACH ================= */
-function addChat(role,text,img){S.chat.push({role,text,img});save();renderChat();}
+/* Guarda no chat uma MINIATURA do print, não a imagem cheia.
+   Print de celular em base64 passa de 400 KB; a miniatura fica em ~15 KB. */
+function miniatura(dataUrl,maxW=280,q=0.6){
+  return new Promise(res=>{
+    try{
+      const img=new Image();
+      img.onload=()=>{try{
+        const esc=Math.min(1,maxW/img.width);
+        const c=document.createElement("canvas");
+        c.width=Math.round(img.width*esc);c.height=Math.round(img.height*esc);
+        c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+        res(c.toDataURL("image/jpeg",q));
+      }catch(e){res(null);}};
+      img.onerror=()=>res(null);
+      img.src=dataUrl;
+    }catch(e){res(null);}
+  });
+}
+function addChat(role,text,img){S.chat.push({role,text,img});podarImagensChat(4);save();renderChat();}
+async function addChatImg(role,text,dataUrl){
+  const mini=await miniatura(dataUrl);
+  addChat(role,text,mini||undefined);
+}
 function renderChat(){const log=document.getElementById("chatLog");if(!S.chat.length){log.innerHTML=`<div class="msg bot">Bom treino, Jonathan 💪 Sou seu coach.\nPosso: dar a **leitura do dia** (libera/segura pelo sono), montar o **treino de hoje** com as cargas, ler o **print do sono** que você anexar 📎 e no fim **atualizar sua base**.\n\nToque numa sugestão ou me pergunte.</div>`;}else log.innerHTML=S.chat.map(m=>`<div class="msg ${m.role==='user'?'me':'bot'}">${fmtMsg(m.text)}${m.img?`<img src="${m.img}">`:''}</div>`).join("");log.scrollTop=log.scrollHeight;}
 function fmtMsg(t){return (t||"").replace(/</g,"&lt;").replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");}
 const SUGGEST=["Posso treinar hoje?","Qual é o treino de hoje?","Meu progresso","O que subir de carga?"];
@@ -716,35 +1170,81 @@ function ruleCoach(q){q=q.toLowerCase();const r=readiness(),next=nextLetter(),w=
   return`Posso: **leitura do dia**, **treino de hoje** com cargas, **seu progresso** e **o que subir**. Anexe os prints do sono 📎 — pode mandar os dois de uma vez (precisa do Gemini ativo). Para conversa completa lendo todo o histórico, ative o Gemini grátis em Ajustes.`;}
 /* Modelos tentados em ordem — o Google muda cotas do plano gratuito com o tempo.
    O que funcionar é memorizado em S.settings.geminiModel para as próximas chamadas. */
-const GEMINI_MODELS=["gemini-flash-lite-latest","gemini-flash-latest","gemini-2.5-flash","gemini-2.0-flash-lite","gemini-2.0-flash"];
-async function geminiCall(body){
-  const key=S.settings.geminiKey;if(!key)return{erro:"sem chave"};
+const GEMINI_MODELS=["gemini-flash-latest","gemini-2.5-flash","gemini-flash-lite-latest","gemini-2.0-flash","gemini-2.0-flash-lite"];
+const RETRY_STATUS=[500,502,503,504];      // sobrecarga temporária → vale insistir
+const BACKOFF_MS=[900,2600];                // espera antes da 2ª e da 3ª tentativa
+function sleepMs(ms){return new Promise(r=>setTimeout(r,ms));}
+/* Chama o Gemini com 3 tentativas por modelo (backoff) e fallback para os outros modelos.
+   onStatus(txt) é opcional — recebe o andamento para mostrar na tela. */
+async function geminiCall(body,onStatus){
+  const key=S.settings.geminiKey;if(!key)return{erro:"sem chave",status:0};
   const saved=S.settings.geminiModel;
-  const lista=saved?[saved,...GEMINI_MODELS.filter(m=>m!==saved)]:GEMINI_MODELS;
-  let ultimoErro="sem resposta";
-  for(const m of lista){
-    try{
-      const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-      const j=await res.json();
-      const txt=j.candidates?.[0]?.content?.parts?.[0]?.text;
-      if(txt){if(S.settings.geminiModel!==m){S.settings.geminiModel=m;save(true);}return{texto:txt,modelo:m};}
-      ultimoErro=j.error?.message||("HTTP "+res.status);
-      // 404 (modelo inexistente) e 429 (cota) → tenta o próximo; outros erros param aqui
-      if(res.status!==404&&res.status!==429)break;
-    }catch(e){ultimoErro="sem conexão";break;}
+  const lista=saved?[saved,...GEMINI_MODELS.filter(m=>m!==saved)]:GEMINI_MODELS.slice();
+  let ultimoErro="sem resposta",ultimoStatus=0;
+  for(let mi=0;mi<lista.length;mi++){
+    const m=lista[mi];
+    for(let tent=0;tent<3;tent++){
+      try{
+        if(onStatus&&(tent>0||mi>0))onStatus(`${m.replace("gemini-","")} · tentativa ${tent+1}/3…`);
+        const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+        const j=await res.json().catch(()=>({}));
+        const txt=j.candidates?.[0]?.content?.parts?.[0]?.text;
+        if(txt){if(S.settings.geminiModel!==m){S.settings.geminiModel=m;save(true);}return{texto:txt,modelo:m,status:200};}
+        ultimoErro=j.error?.message||("HTTP "+res.status);ultimoStatus=res.status;
+        if(RETRY_STATUS.includes(res.status)){
+          if(tent<2){await sleepMs(BACKOFF_MS[tent]);continue;}
+          break;                       // esgotou as tentativas → próximo modelo
+        }
+        if(res.status===429||res.status===404)break;   // cota ou modelo inexistente → próximo modelo
+        return{erro:ultimoErro,status:res.status};     // 400/403 (chave) → insistir não resolve
+      }catch(e){return{erro:"sem conexão",status:0};}
+    }
   }
-  return{erro:ultimoErro};
+  return{erro:ultimoErro,status:ultimoStatus};
+}
+/* Traduz o erro técnico em instrução acionável. */
+function gemErroMsg(r){
+  const st=r.status||0;
+  if(RETRY_STATUS.includes(st))return"Os servidores do Gemini estão congestionados agora (erro 503) — tentei todos os modelos, 3 vezes cada. **Não é problema da sua chave nem da sua cota.** Tente de novo em alguns minutos, ou digite os números no Diário.";
+  if(st===429)return"**Cota diária do Gemini esgotada.** Ela zera à meia-noite no horário do Pacífico (~4h ou 5h no Brasil). Por hoje, digite os números direto no Diário.";
+  if(st===400||st===403)return"**Chave do Gemini inválida ou sem permissão.** Gere outra em aistudio.google.com/apikey e cole em Ajustes.";
+  if(st===0)return"Sem conexão com a internet. Verifique a rede e tente de novo.";
+  return r.erro||"Erro desconhecido.";
+}
+/* Reduz o print antes de enviar: menos peso = menos timeout e menos cota gasta. */
+function shrinkImage(dataUrl,mime,maxW=1280,q=0.82){
+  return new Promise(res=>{
+    try{
+      const img=new Image();
+      img.onload=()=>{
+        try{
+          const esc=Math.min(1,maxW/img.width);
+          if(esc>=1&&mime==="image/jpeg")return res({dataUrl,mime});
+          const c=document.createElement("canvas");
+          c.width=Math.round(img.width*esc);c.height=Math.round(img.height*esc);
+          const cx=c.getContext("2d");cx.fillStyle="#000";cx.fillRect(0,0,c.width,c.height);
+          cx.drawImage(img,0,0,c.width,c.height);
+          res({dataUrl:c.toDataURL("image/jpeg",q),mime:"image/jpeg"});
+        }catch(e){res({dataUrl,mime});}
+      };
+      img.onerror=()=>res({dataUrl,mime});
+      img.src=dataUrl;
+    }catch(e){res({dataUrl,mime});}
+  });
 }
 async function coachReply(q){
   if(!S.settings.geminiKey)return ruleCoach(q);
   const r=await geminiCall({system_instruction:{parts:[{text:buildContext()}]},contents:[{role:"user",parts:[{text:q}]}]});
-  return r.texto||("(Gemini) "+r.erro+"\n\n"+ruleCoach(q));
+  return r.texto||("(Gemini) "+gemErroMsg(r)+"\n\n"+ruleCoach(q));
 }
-function buildContext(){const next=nextLetter(),w=PROGRAMA[next],r=readiness();const prog=CICLO.map(l=>`${l} ${PROGRAMA[l].nome}: `+PROGRAMA[l].exercicios.map(ex=>`${ex.nome}(${ex.sets}x${ex.repMin}-${ex.repMax},RIR${ex.rir}${refFor(ex,l)?',ref '+refFor(ex,l):''})`).join("; ")).join("\n");const diary=[...S.diary].sort((a,b)=>a.data<b.data?1:-1).slice(-6).map(d=>`${d.data}: treino ${d.treino||'-'}, sono ${d.sonoPont||'-'}, recF ${d.recFisica??'-'}, ciclos ${d.ciclos??'-'}, prof ${d.profundoMin??'-'}min. ${d.obs||''}`).join("\n");return`Você é o coach pessoal (personal + cientista do exercício) do Jonathan, 34a, 96kg 1,75m, hipertrofia. Em ciclo de Durateston sob a Dra. Helena; sono ruim por stress.
+function buildContext(){const next=nextLetter(),w=PROGRAMA[next],r=readiness();const prog=CICLO.map(l=>`${l} ${PROGRAMA[l].nome}: `+PROGRAMA[l].exercicios.map(ex=>`${ex.nome}(${ex.sets}x${ex.repMin}-${ex.repMax},RIR${ex.rir}${refFor(ex,l)?',ref '+refFor(ex,l):''})`).join("; ")).join("\n");const diary=[...S.diary].sort((a,b)=>a.data<b.data?1:-1).slice(-6).map(d=>`${d.data}: treino ${d.treino||'-'}, sono ${d.sonoPont||'-'}, recF ${d.recFisica??'-'}, ciclos ${d.ciclos??'-'}, prof ${d.profundoMin??'-'}min, água ${d.aguaMl?(d.aguaMl/1000).toFixed(1)+'L':'-'}${(d.meds&&d.meds.length)?', aplicou '+d.meds.map(a=>a.nome+' '+(a.dose||'')+(a.unidade||'')).join(' + '):''}. ${d.obs||''}`).join("\n");
+const examesCtx=EXAMES().map(x=>{const rs=exResultados(x.id);const u=rs.length?rs[rs.length-1]:null;
+  return u?`${x.nome}: ${u.valor}${x.unidade||''} (${u.data}) ref ${exFaixa(x)} -> ${exStatus(x,u.valor)}`:null;}).filter(Boolean).join("\n")||"nenhum exame registrado";
+const medsCtx=MEDS().filter(m=>m.ativo!==false).map(m=>{const ap=medAplicacoes(m.id);const u=ap.length?ap[ap.length-1]:null;return `${m.nome} (${m.via||'IM'}${m.freqDias?', a cada '+m.freqDias+'d':''}): ${u?'última '+u.data+' '+(u.dose||'?')+(m.unidade||'')+' em '+(u.local||'-'):'sem registro'}`;}).join("\n")||"nenhum medicamento cadastrado";return`Você é o coach pessoal (personal + cientista do exercício) do Jonathan, 34a, 96kg 1,75m, hipertrofia. Em ciclo de Durateston sob a Dra. Helena; sono ruim por stress.
 REGRAS: Dupla progressão (topo da faixa em TODAS as séries de trabalho -> sobe carga; aquecimento não conta). RIR compostos 1-3, isoladores 0-1. Ciclo A->B->C->D->E->F->folga. Cardio Z2 20-30min após A,C,E. Gate: pontuação>60 e rec>50%; upper flexível se profundo/REM bons; perna/estreia exige gate cheio; ciclos<=2 ou profundo~0 -> não treinar.
 ESTILO: direto, científico, decide sem perguntar preferência. Respostas curtas em markdown com **negrito**. Usuário reporta séries JUNTAS (peso x reps).
 POSIÇÃO: próximo = ${next} ${w.nome}. Hoje: ${r.title} — ${r.msg}.
-PROGRAMA/CARGAS:\n${prog}\nDIÁRIO RECENTE:\n${diary}`;}
+PROGRAMA/CARGAS:\n${prog}\nMEDICAÇÃO EM CURSO:\n${medsCtx}\nEXAMES (último resultado):\n${examesCtx}\nSe algum marcador estiver fora da faixa, aponte e diga para levar à médica — nunca sugira dose de medicamento nem ajuste de ciclo.\nMETA DE ÁGUA: ${AGUA_META()} ml/dia\nDIÁRIO RECENTE:\n${diary}`;}
 document.getElementById("chatSend").onclick=sendChat;
 document.getElementById("chatText").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendChat();}});
 async function sendChat(){const el=document.getElementById("chatText");const q=el.value.trim();if(!q)return;el.value="";addChat("user",q);const log=document.getElementById("chatLog");const tmp=document.createElement("div");tmp.className="msg bot";tmp.textContent="…";log.appendChild(tmp);log.scrollTop=log.scrollHeight;const ans=await coachReply(q);tmp.remove();addChat("bot",ans);}
@@ -759,15 +1259,17 @@ document.getElementById("imgFile").onchange=async e=>{
 async function handleImages(imgs){
   if(!imgs.length)return;
   const n=imgs.length;
-  addChat("user",n===1?"(print do sono anexado)":`(${n} prints do sono anexados)`,imgs[0].dataUrl);
+  await addChatImg("user",n===1?"(print do sono anexado)":`(${n} prints do sono anexados)`,imgs[0].dataUrl);
   if(!S.settings.geminiKey){addChat("bot","Para eu **ler os prints automaticamente** preciso do Gemini ativo (grátis, em Ajustes). Sem ele, me diga os números: pontuação, recuperação física %, ciclos, sono profundo (min) e REM (min) — eu registro no diário.");return;}
   const log=document.getElementById("chatLog");const tmp=document.createElement("div");tmp.className="msg bot";tmp.textContent=n===1?"Lendo o print…":`Lendo os ${n} prints…`;log.appendChild(tmp);log.scrollTop=log.scrollHeight;
+  const setStatus=t=>{tmp.textContent=(n===1?"Lendo o print… ":`Lendo os ${n} prints… `)+t;log.scrollTop=log.scrollHeight;};
   const prompt=`As imagens a seguir são ${n===1?"um print":`${n} prints`} do MESMO relatório de sono (Samsung Health) — telas diferentes da mesma noite (ex.: pontuação/fatores e fases do sono). Combine os dados de TODAS elas em um único resultado; se um campo aparecer em mais de uma imagem, use o valor mais específico. Responda APENAS um JSON válido, sem texto extra, com as chaves (use null quando o campo não aparecer em nenhuma imagem): {"sonoPont":num,"recFisica":num,"recMental":num,"descanso":num,"ciclos":num,"profundoMin":num,"remMin":num,"acordadoMin":num,"leveMin":num,"spo2":num}. Converta horas:min em minutos (ex.: 1h12 = 72).`;
   try{
-    const parts=[{text:prompt},...imgs.map(im=>({inline_data:{mime_type:im.mime,data:im.dataUrl.split(",")[1]}}))];
-    const g=await geminiCall({contents:[{role:"user",parts}]});
+    const small=await Promise.all(imgs.map(im=>shrinkImage(im.dataUrl,im.mime)));
+    const parts=[{text:prompt},...small.map(im=>({inline_data:{mime_type:im.mime,data:im.dataUrl.split(",")[1]}}))];
+    const g=await geminiCall({contents:[{role:"user",parts}]},setStatus);
     const mt=(g.texto||"").match(/\{[\s\S]*\}/);tmp.remove();
-    if(!mt){addChat("bot","Não consegui ler "+(n===1?"o print":"os prints")+". "+(g.erro||"Tente prints mais nítidos ou digite os números."));return;}
+    if(!mt){addChat("bot","Não consegui ler "+(n===1?"o print":"os prints")+".\n\n"+(g.texto?"A IA respondeu mas sem dados reconhecíveis. Confira se são as telas de sono do Samsung Health.":gemErroMsg(g)));return;}
     const data=JSON.parse(mt[0]);const e={data:todayISO()};
     ["sonoPont","recFisica","recMental","ciclos","profundoMin","remMin"].forEach(k=>{if(data[k]!=null)e[k]=Number(data[k]);});
     if(Object.keys(e).length===1){addChat("bot","Li "+(n===1?"a imagem":"as imagens")+", mas não encontrei nenhum dado de sono reconhecível. Confira se são as telas de sono do Samsung Health, ou digite os números no Diário.");return;}
@@ -775,7 +1277,7 @@ async function handleImages(imgs){
     const r=readiness();
     addChat("bot",`**${n===1?"Print":`${n} prints`} lido${n===1?"":"s"} e diário atualizado ✔**\n💤 Pontuação ${data.sonoPont??'—'} · 🔋 Rec. física ${data.recFisica??'—'}% · 🧠 Rec. mental ${data.recMental??'—'}% · 🔁 ${data.ciclos??'—'} ciclos · 🌙 Profundo ${data.profundoMin??'—'}min · 👁️ REM ${data.remMin??'—'}min\n\n**Leitura:** ${r.title}. ${r.msg}`);
     toast("Sono registrado ✔");
-  }catch(err){tmp.remove();addChat("bot","Erro ao contatar a IA. Verifique a chave em Ajustes ou digite os números manualmente.");}
+  }catch(err){tmp.remove();addChat("bot","Erro ao processar "+(n===1?"o print":"os prints")+": "+(err&&err.message?err.message:"falha desconhecida")+". Digite os números no Diário.");}
 }
 async function geminiFood(nome,g){try{const r=await geminiCall({contents:[{role:"user",parts:[{text:`Estime os macros de ${g} g de "${nome}". Responda APENAS JSON: {"kcal":num,"prot":num,"carbo":num,"gord":num} (totais para ${g} g).`}]}]});const m=(r.texto||"").match(/\{[\s\S]*\}/);if(!m)return null;const d=JSON.parse(m[0]);return{kcal:Math.round(d.kcal),prot:Math.round(d.prot),carbo:Math.round(d.carbo),gord:Math.round(d.gord)};}catch(e){return null;}}
 
@@ -825,7 +1327,7 @@ document.getElementById("progBack").onclick=()=>{S.draft=null;initToday();switch
 document.getElementById("progResetDefault").onclick=()=>{if(confirm("Restaurar os exercícios originais da planilha? Suas alterações no programa serão perdidas (o histórico de treinos é mantido).")){S.program=JSON.parse(JSON.stringify(PROGRAMA_DEFAULT));PROGRAMA=S.program;save();renderProgEdit();toast("Programa restaurado");}};
 
 /* ================= NAV / UTIL ================= */
-function switchView(v){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.getElementById("view-"+v).classList.add("active");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));document.getElementById("chatDock").style.display=v==="coach"?"block":"none";document.body.style.paddingBottom=v==="coach"?"150px":"88px";window.scrollTo(0,0);if(v==="prog")renderProgress();if(v==="diario")renderDiaryHist();if(v==="nutri")renderNutri();if(v==="coach"){renderChat();renderSuggest();}}
+function switchView(v){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.getElementById("view-"+v).classList.add("active");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));document.getElementById("chatDock").style.display=v==="coach"?"block":"none";document.body.style.paddingBottom=v==="coach"?"150px":"88px";window.scrollTo(0,0);if(v==="prog")renderProgress();if(v==="hoje"){renderWater();}if(v==="diario"){renderDiaryHist();renderMeds();renderExames();}if(v==="nutri")renderNutri();if(v==="coach"){renderChat();renderSuggest();}}
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 function toast(t){const el=document.getElementById("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1900);}
 function applyTheme(){document.documentElement.setAttribute("data-theme",S.settings.theme);const m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute("content",S.settings.theme==="light"?"#F3F5F8":"#0E1217");}
@@ -839,13 +1341,18 @@ function xCell(v){if(v===''||v==null)return '<Cell><Data ss:Type="String"></Data
 function xRow(arr){return '<Row>'+arr.map(xCell).join('')+'</Row>';}
 function xSheet(name,header,rows){return '<Worksheet ss:Name="'+xmlesc(name)+'"><Table>'+xRow(header)+rows.map(xRow).join('')+'</Table></Worksheet>';}
 function buildXls(){
-  const diary=[...S.diary].sort((a,b)=>a.data<b.data?-1:1).map(d=>[d.data,d.treino||'',numOrBlank(d.sonoPont),numOrBlank(d.recFisica),numOrBlank(d.recMental),numOrBlank(d.ciclos),numOrBlank(d.profundoMin),numOrBlank(d.remMin),numOrBlank(d.pesoKg),numOrBlank(d.cardioMin),numOrBlank(d.humor),numOrBlank(d.energia),numOrBlank(d.ansiedade),d.obs||'']);
+  const diary=[...S.diary].sort((a,b)=>a.data<b.data?-1:1).map(d=>[d.data,d.treino||'',numOrBlank(d.sonoPont),numOrBlank(d.recFisica),numOrBlank(d.recMental),numOrBlank(d.ciclos),numOrBlank(d.profundoMin),numOrBlank(d.remMin),numOrBlank(d.pesoKg),numOrBlank(d.cardioMin),numOrBlank(d.aguaMl),numOrBlank(d.humor),numOrBlank(d.energia),numOrBlank(d.ansiedade),d.obs||'']);
+  const exRows=[...S.exames].sort((a,b)=>a.data<b.data?-1:1).map(r=>{const x=EXAMES().find(e=>e.id===r.examId)||{};
+    return [r.data,x.nome||r.examId,numOrBlank(r.valor),x.unidade||'',numOrBlank(x.min),numOrBlank(x.max),exStatus(x,r.valor)||''];});
+  const medsRows=[];[...S.diary].sort((a,b)=>a.data<b.data?-1:1).forEach(d=>(d.meds||[]).forEach(a=>medsRows.push([d.data,a.nome,numOrBlank(a.dose),a.unidade||'',a.via||'',a.local||''])));
   const fin=S.sessions.filter(s=>s.finished).sort((a,b)=>a.data<b.data?-1:1);
   const treinos=fin.map(s=>[s.data,s.letra,s.nome,Math.round(tonnage(s)),s.ex.filter(e=>e.sets.some(t=>t.reps)).length]);
   const sets=[];fin.forEach(s=>s.ex.forEach(e=>e.sets.forEach((t,i)=>{if(t.reps||t.load)sets.push([s.data,s.letra,e.nome,i+1,numOrBlank(t.load),numOrBlank(t.reps),t.rir||'']);})));
   const meals=[...S.meals].sort((a,b)=>a.data<b.data?-1:1).map(m=>[m.data,m.nome,Math.round(m.kcal||0),Math.round(m.prot||0),Math.round(m.carbo||0),Math.round(m.gord||0)]);
   return '<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
-   +xSheet('Diário',['Data','Treino','Pont. sono','Rec. física %','Rec. mental %','Ciclos','Profundo (min)','REM (min)','Peso (kg)','Cardio (min)','Humor','Energia','Ansiedade','Observações'],diary)
+   +xSheet('Diário',['Data','Treino','Pont. sono','Rec. física %','Rec. mental %','Ciclos','Profundo (min)','REM (min)','Peso (kg)','Cardio (min)','Água (ml)','Humor','Energia','Ansiedade','Observações'],diary)
+   +xSheet('Medicação',['Data','Medicamento','Dose','Unidade','Via','Local'],medsRows)
+   +xSheet('Exames',['Data','Marcador','Valor','Unidade','Ref. mín','Ref. máx','Situação'],exRows)
    +xSheet('Treinos',['Data','Ciclo','Nome','Tonelagem (kg)','Nº exercícios'],treinos)
    +xSheet('Séries',['Data','Ciclo','Exercício','Série','Peso','Reps','RIR'],sets)
    +xSheet('Refeições',['Data','Alimento','kcal','Proteína (g)','Carbo (g)','Gordura (g)'],meals)
@@ -856,6 +1363,11 @@ document.getElementById("impBtn").onclick=()=>document.getElementById("impFile")
 document.getElementById("impFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{S=Object.assign(freshState(),JSON.parse(rd.result));save();location.reload();}catch(err){toast("Arquivo inválido");}};rd.readAsText(f);};
 document.getElementById("clearHistBtn").onclick=()=>{if(confirm("Zerar todo o histórico (treinos, diário, refeições e conversa) e recomeçar do zero agora? Seus exercícios serão mantidos.")){S.sessions=[];S.diary=[];S.meals=[];S.chat=[];S.draft=null;if(S.settings.progPeriod)S.settings.progPeriod.start="";save();location.reload();}};
 document.getElementById("resetBtn").onclick=()=>{if(confirm("Restaurar TUDO ao estado original da planilha? Isto apaga seus registros E volta os exercícios ao padrão.")){S=freshState();save();location.reload();}};
+document.getElementById("exAddBtn").onclick=novoExame;
+document.getElementById("exPainelBtn").onclick=painelConsulta;
+document.getElementById("medAddBtn").onclick=novoMed;
+document.getElementById("medHistBtn").onclick=medHistorico;
+document.getElementById("dData").addEventListener("change",()=>renderMeds());
 document.getElementById("saveKey").onclick=()=>{S.settings.geminiKey=document.getElementById("geminiKey").value.trim();save();toast(S.settings.geminiKey?"Coach IA ativado ✔":"Chave removida — coach por regras");};
 document.getElementById("deployHelp").textContent=`GITHUB PAGES (grátis):
 1. Crie um repositório e suba a pasta HyperFit.
@@ -953,7 +1465,13 @@ document.getElementById("fbHelp").textContent=`1. console.firebase.google.com �
 
 /* ================= BOOT ================= */
 applyTheme();document.getElementById("geminiKey").value=S.settings.geminiKey||"";
+renderWater();renderMeds();
 initToday();initDiary();renderChat();renderSyncUI();
+/* Android pode encerrar a aba a qualquer momento ao trocar de app.
+   Grava imediatamente sempre que a tela é escondida. */
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")save(true);});
+window.addEventListener("pagehide",()=>save(true));
+window.addEventListener("blur",()=>save(true));
 if(S.settings.firebase&&S.settings.firebase.apiKey)fbConnect();
 window.addEventListener("resize",()=>{if(document.getElementById("view-prog").classList.contains("active"))renderProgress();});
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
