@@ -153,7 +153,8 @@ main{max-width:640px;margin:0 auto;padding:16px 16px 24px}
 .bar-fill{height:100%;border-radius:5px;background:var(--accent)}
 .macro-ring{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 
-#chatLog{display:flex;flex-direction:column;gap:10px;min-height:40vh;padding-bottom:8px}
+#chatLog{display:flex;flex-direction:column;gap:10px;min-height:40vh;padding-bottom:8px;scroll-behavior:smooth}
+#view-coach{padding-bottom:12px}
 .msg{max-width:88%;padding:11px 13px;border-radius:15px;font-size:14px;white-space:pre-wrap;line-height:1.5}
 .msg.bot{background:var(--surface);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:5px}
 .msg.me{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:5px}
@@ -1158,7 +1159,35 @@ async function addChatImg(role,text,dataUrl){
   const mini=await miniatura(dataUrl);
   addChat(role,text,mini||undefined);
 }
-function renderChat(){const log=document.getElementById("chatLog");if(!S.chat.length){log.innerHTML=`<div class="msg bot">Bom treino, Jonathan 💪 Sou seu coach.\nPosso: dar a **leitura do dia** (libera/segura pelo sono), montar o **treino de hoje** com as cargas, ler o **print do sono** que você anexar 📎 e no fim **atualizar sua base**.\n\nToque numa sugestão ou me pergunte.</div>`;}else log.innerHTML=S.chat.map(m=>`<div class="msg ${m.role==='user'?'me':'bot'}">${fmtMsg(m.text)}${m.img?`<img src="${m.img}">`:''}</div>`).join("");log.scrollTop=log.scrollHeight;}
+/* Quem realmente rola aqui é a PÁGINA, não a div #chatLog (que só cresce).
+   Por isso o "log.scrollTop=log.scrollHeight" antigo não fazia nada e a conversa
+   ficava travada no topo. Esta função rola o container certo. */
+function chatNoFim(){
+  const log=document.getElementById("chatLog");
+  if(!log)return;
+  const doc=document.scrollingElement||document.documentElement;
+  // se a div tiver barra própria (telas largas), rola ela também
+  if(log.scrollHeight>log.clientHeight+4)log.scrollTop=log.scrollHeight;
+  const alvo=Math.max(0,doc.scrollHeight-doc.clientHeight);
+  doc.scrollTop=alvo;
+  try{window.scrollTo({top:alvo,behavior:"auto"});}catch(e){}
+}
+/* Rola agora, no próximo quadro e depois que as imagens carregarem —
+   uma miniatura só entra na altura da página quando termina de decodificar. */
+function chatScroll(){
+  chatNoFim();
+  requestAnimationFrame(chatNoFim);
+  setTimeout(chatNoFim,60);
+  setTimeout(chatNoFim,260);
+  const log=document.getElementById("chatLog");
+  if(!log)return;
+  log.querySelectorAll("img").forEach(im=>{
+    if(im.complete)return;
+    im.addEventListener("load",chatNoFim,{once:true});
+    im.addEventListener("error",chatNoFim,{once:true});
+  });
+}
+function renderChat(){const log=document.getElementById("chatLog");if(!S.chat.length){log.innerHTML=`<div class="msg bot">Bom treino, Jonathan 💪 Sou seu coach.\nPosso: dar a **leitura do dia** (libera/segura pelo sono), montar o **treino de hoje** com as cargas, ler o **print do sono** que você anexar 📎 e no fim **atualizar sua base**.\n\nToque numa sugestão ou me pergunte.</div>`;}else log.innerHTML=S.chat.map(m=>`<div class="msg ${m.role==='user'?'me':'bot'}">${fmtMsg(m.text)}${m.img?`<img src="${m.img}">`:''}</div>`).join("");chatScroll();}
 function fmtMsg(t){return (t||"").replace(/</g,"&lt;").replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");}
 const SUGGEST=["Posso treinar hoje?","Qual é o treino de hoje?","Meu progresso","O que subir de carga?"];
 function renderSuggest(){document.getElementById("suggestBar").innerHTML=SUGGEST.map(s=>`<button>${s}</button>`).join("");document.querySelectorAll("#suggestBar button").forEach(b=>b.onclick=()=>{document.getElementById("chatText").value=b.textContent;sendChat();});}
@@ -1247,7 +1276,7 @@ POSIÇÃO: próximo = ${next} ${w.nome}. Hoje: ${r.title} — ${r.msg}.
 PROGRAMA/CARGAS:\n${prog}\nMEDICAÇÃO EM CURSO:\n${medsCtx}\nEXAMES (último resultado):\n${examesCtx}\nSe algum marcador estiver fora da faixa, aponte e diga para levar à médica — nunca sugira dose de medicamento nem ajuste de ciclo.\nMETA DE ÁGUA: ${AGUA_META()} ml/dia\nDIÁRIO RECENTE:\n${diary}`;}
 document.getElementById("chatSend").onclick=sendChat;
 document.getElementById("chatText").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendChat();}});
-async function sendChat(){const el=document.getElementById("chatText");const q=el.value.trim();if(!q)return;el.value="";addChat("user",q);const log=document.getElementById("chatLog");const tmp=document.createElement("div");tmp.className="msg bot";tmp.textContent="…";log.appendChild(tmp);log.scrollTop=log.scrollHeight;const ans=await coachReply(q);tmp.remove();addChat("bot",ans);}
+async function sendChat(){const el=document.getElementById("chatText");const q=el.value.trim();if(!q)return;el.value="";addChat("user",q);const log=document.getElementById("chatLog");const tmp=document.createElement("div");tmp.className="msg bot";tmp.textContent="…";log.appendChild(tmp);chatScroll();const ans=await coachReply(q);tmp.remove();addChat("bot",ans);}
 // anexar print do sono
 document.getElementById("attachBtn").onclick=()=>document.getElementById("imgFile").click();
 document.getElementById("imgFile").onchange=async e=>{
@@ -1261,8 +1290,8 @@ async function handleImages(imgs){
   const n=imgs.length;
   await addChatImg("user",n===1?"(print do sono anexado)":`(${n} prints do sono anexados)`,imgs[0].dataUrl);
   if(!S.settings.geminiKey){addChat("bot","Para eu **ler os prints automaticamente** preciso do Gemini ativo (grátis, em Ajustes). Sem ele, me diga os números: pontuação, recuperação física %, ciclos, sono profundo (min) e REM (min) — eu registro no diário.");return;}
-  const log=document.getElementById("chatLog");const tmp=document.createElement("div");tmp.className="msg bot";tmp.textContent=n===1?"Lendo o print…":`Lendo os ${n} prints…`;log.appendChild(tmp);log.scrollTop=log.scrollHeight;
-  const setStatus=t=>{tmp.textContent=(n===1?"Lendo o print… ":`Lendo os ${n} prints… `)+t;log.scrollTop=log.scrollHeight;};
+  const log=document.getElementById("chatLog");const tmp=document.createElement("div");tmp.className="msg bot";tmp.textContent=n===1?"Lendo o print…":`Lendo os ${n} prints…`;log.appendChild(tmp);chatScroll();
+  const setStatus=t=>{tmp.textContent=(n===1?"Lendo o print… ":`Lendo os ${n} prints… `)+t;chatNoFim();};
   const prompt=`As imagens a seguir são ${n===1?"um print":`${n} prints`} do MESMO relatório de sono (Samsung Health) — telas diferentes da mesma noite (ex.: pontuação/fatores e fases do sono). Combine os dados de TODAS elas em um único resultado; se um campo aparecer em mais de uma imagem, use o valor mais específico. Responda APENAS um JSON válido, sem texto extra, com as chaves (use null quando o campo não aparecer em nenhuma imagem): {"sonoPont":num,"recFisica":num,"recMental":num,"descanso":num,"ciclos":num,"profundoMin":num,"remMin":num,"acordadoMin":num,"leveMin":num,"spo2":num}. Converta horas:min em minutos (ex.: 1h12 = 72).`;
   try{
     const small=await Promise.all(imgs.map(im=>shrinkImage(im.dataUrl,im.mime)));
@@ -1327,7 +1356,7 @@ document.getElementById("progBack").onclick=()=>{S.draft=null;initToday();switch
 document.getElementById("progResetDefault").onclick=()=>{if(confirm("Restaurar os exercícios originais da planilha? Suas alterações no programa serão perdidas (o histórico de treinos é mantido).")){S.program=JSON.parse(JSON.stringify(PROGRAMA_DEFAULT));PROGRAMA=S.program;save();renderProgEdit();toast("Programa restaurado");}};
 
 /* ================= NAV / UTIL ================= */
-function switchView(v){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.getElementById("view-"+v).classList.add("active");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));document.getElementById("chatDock").style.display=v==="coach"?"block":"none";document.body.style.paddingBottom=v==="coach"?"150px":"88px";window.scrollTo(0,0);if(v==="prog")renderProgress();if(v==="hoje"){renderWater();}if(v==="diario"){renderDiaryHist();renderMeds();renderExames();}if(v==="nutri")renderNutri();if(v==="coach"){renderChat();renderSuggest();}}
+function switchView(v){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.getElementById("view-"+v).classList.add("active");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));document.getElementById("chatDock").style.display=v==="coach"?"block":"none";document.body.style.paddingBottom=v==="coach"?"150px":"88px";window.scrollTo(0,0);if(v==="prog")renderProgress();if(v==="coach")chatScroll();if(v==="hoje"){renderWater();}if(v==="diario"){renderDiaryHist();renderMeds();renderExames();}if(v==="nutri")renderNutri();if(v==="coach"){renderChat();renderSuggest();}}
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 function toast(t){const el=document.getElementById("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1900);}
 function applyTheme(){document.documentElement.setAttribute("data-theme",S.settings.theme);const m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute("content",S.settings.theme==="light"?"#F3F5F8":"#0E1217");}
