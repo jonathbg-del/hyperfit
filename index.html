@@ -69,7 +69,8 @@ main{max-width:640px;margin:0 auto;padding:16px 16px 24px}
 .next-hd .meta h2{font-size:20px}
 .next-hd .meta p{color:var(--muted);font-size:13.5px}
 .cycle-strip{display:flex;gap:6px;margin:14px 0 2px}
-.cycle-strip .c{flex:1;text-align:center;padding:7px 0;border-radius:9px;font-weight:800;font-size:13px;background:var(--elev);color:var(--faint);border:1px solid var(--border)}
+.cycle-strip .c{flex:1;text-align:center;padding:11px 0;border-radius:9px;font-weight:800;font-size:14px;background:var(--elev);color:var(--faint);border:1px solid var(--border);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease}
+.cycle-strip .c:active{transform:scale(.92)}
 .cycle-strip .c.done{color:var(--cool);border-color:transparent;background:var(--cool-soft)}
 .cycle-strip .c.now{color:#fff;background:var(--accent);border-color:transparent;box-shadow:0 0 14px var(--accent-soft)}
 
@@ -233,7 +234,7 @@ details pre{background:var(--bg);border:1px solid var(--border);border-radius:10
       <div class="next-hd">
         <div class="letter" id="nextLetter">E</div>
         <div class="meta" style="flex:1"><h2 id="nextName">Push B</h2><p id="nextFoco"></p></div>
-        <select id="pickWorkout" class="fld" style="width:auto;padding:8px 10px;font-size:13px"></select>
+        <select id="pickWorkout" class="fld" style="display:none"></select>
       </div>
       <div class="cycle-strip" id="cycleStrip"></div>
       <p class="small muted" id="nextHint" style="margin-top:10px"></p>
@@ -660,7 +661,28 @@ const META=()=>S.settings.nutriMeta||META_DEFAULT;
 const AGUA_META=()=>S.settings.aguaMetaMl||AGUA_META_DEFAULT;
 const MEDS=()=>S.settings.medsCatalogo||(S.settings.medsCatalogo=JSON.parse(JSON.stringify(MEDS_DEFAULT)));
 function diaryFor(iso){let d=S.diary.find(x=>x.data===iso);if(!d){d={data:iso};S.diary.push(d);}return d;}
-function addAgua(ml){const d=diaryFor(todayISO());d.aguaMl=Math.max(0,(+d.aguaMl||0)+ml);save();renderWater();renderDiaryHist();if(typeof renderProgress==="function"&&document.getElementById("view-prog").classList.contains("active"))renderProgress();}
+function aplicarAgua(novoMl){
+  const d=diaryFor(todayISO());
+  d.aguaMl=Math.max(0,Math.round(novoMl));
+  save();renderWater();renderDiaryHist();
+  if(typeof renderProgress==="function"&&document.getElementById("view-prog").classList.contains("active"))renderProgress();
+}
+function addAgua(ml){
+  const d=S.diary.find(x=>x.data===todayISO())||{};
+  aplicarAgua((+d.aguaMl||0)+ml);
+}
+/* Corrigir o total do dia — para quando o valor real é quebrado (780 ml)
+   ou quando um dos botões foi tocado sem querer. */
+function editarAgua(){
+  const d=S.diary.find(x=>x.data===todayISO())||{};
+  const atual=+d.aguaMl||0;
+  const v=prompt("Total de água de hoje, em ml:",atual);
+  if(v===null)return;
+  const n=parseFloat(String(v).replace(",","."));
+  if(!isFinite(n)||n<0){toast("Valor inválido");return;}
+  aplicarAgua(n);
+  toast("Água ajustada ✔");
+}
 /* ---------- exames & marcadores ---------- */
 const EXAMES=()=>S.settings.examesCatalogo||(S.settings.examesCatalogo=JSON.parse(JSON.stringify(EXAMES_DEFAULT)));
 function exResultados(examId){return S.exames.filter(r=>r.examId===examId).sort((a,b)=>a.data<b.data?-1:1);}
@@ -908,7 +930,11 @@ function renderWater(){
   const pct=Math.min(100,ml/meta*100);
   el.innerHTML=`<div class="k" style="font-size:12px;color:var(--muted);font-weight:700;display:flex;justify-content:space-between">
       <span>💧 Água hoje</span><span class="small" style="cursor:pointer" id="aguaMetaBtn">meta ${(meta/1000).toFixed(1)} L ✎</span></div>
-    <div class="v tnum" style="font-size:26px;font-weight:800;margin-top:4px">${(ml/1000).toFixed(2)} <small style="font-size:13px;color:var(--muted)">/ ${(meta/1000).toFixed(1)} L</small></div>
+    <div class="v tnum" style="font-size:26px;font-weight:800;margin-top:4px;display:flex;align-items:center;gap:10px">
+      <span>${(ml/1000).toFixed(2)} <small style="font-size:13px;color:var(--muted)">/ ${(meta/1000).toFixed(1)} L</small></span>
+      <button id="aguaEditBtn" title="Corrigir o total de hoje" style="background:var(--elev);border:1px solid var(--border);color:var(--muted);border-radius:9px;padding:5px 9px;font-size:13px;cursor:pointer;line-height:1">✎</button>
+      <span class="small muted" style="font-size:11px;font-weight:600">${ml} ml</span>
+    </div>
     <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:#38BDF8"></div></div>
     <div class="wtr">
       <button data-ml="250">+250</button><button data-ml="500">+500</button><button data-ml="750">+750</button>
@@ -916,6 +942,7 @@ function renderWater(){
     </div>
     <div class="small muted" style="margin-top:8px">${ml>=meta?"Meta batida ✔":"Faltam "+((meta-ml)/1000).toFixed(2)+" L"}</div>`;
   el.querySelectorAll(".wtr button").forEach(b=>b.onclick=()=>addAgua(+b.dataset.ml));
+  const eb=document.getElementById("aguaEditBtn");if(eb)eb.onclick=editarAgua;
   const mb=document.getElementById("aguaMetaBtn");
   if(mb)mb.onclick=()=>{const v=prompt("Meta diária de água em ml:",AGUA_META());if(v===null)return;const n=parseInt(v,10);if(n>0){S.settings.aguaMetaMl=n;save();renderWater();toast("Meta de água atualizada ✔");}};
 }
@@ -944,6 +971,17 @@ function tonnage(s){return s.ex.reduce((a,e)=>a+e.sets.reduce((b,t)=>b+(Number(t
 
 /* ================= HOJE ================= */
 let curLetra=null;
+/* Troca o treino do dia. Protege o que já foi registrado: se o rascunho atual
+   tiver qualquer série preenchida, pede confirmação antes de descartar. */
+function trocarTreino(letra){
+  if(!letra||!CICLO.includes(letra)||letra===curLetra)return;
+  const temDados=S.draft&&S.draft.ex&&S.draft.ex.some(e=>e.sets.some(t=>t.reps||t.load));
+  if(temDados&&!confirm(`Você tem séries registradas no treino ${curLetra} que ainda não foram finalizadas.\n\nTrocar para ${letra} · ${PROGRAMA[letra].nome} vai apagá-las. Continuar?`))return;
+  curLetra=letra;
+  const sel=document.getElementById("pickWorkout");if(sel)sel.value=letra;
+  S.draft=null;
+  renderToday();
+}
 function initToday(){
   const sel=document.getElementById("pickWorkout");
   sel.innerHTML=CICLO.map(l=>`<option value="${l}">${l} · ${PROGRAMA[l].nome}</option>`).join("");
@@ -952,11 +990,7 @@ function initToday(){
   const emAndamento=S.draft&&S.draft.letra&&CICLO.includes(S.draft.letra)&&S.draft.ex&&S.draft.ex.some(e=>e.sets.some(t=>t.reps||t.load));
   curLetra=emAndamento?S.draft.letra:nextLetter();
   sel.value=curLetra;
-  sel.onchange=()=>{
-    const temDados=S.draft&&S.draft.ex&&S.draft.ex.some(e=>e.sets.some(t=>t.reps||t.load));
-    if(temDados&&!confirm("Você tem séries registradas neste treino que ainda não foram finalizadas. Trocar de treino vai apagá-las. Continuar?")){sel.value=curLetra;return;}
-    curLetra=sel.value;S.draft=null;renderToday();
-  };
+  sel.onchange=()=>{const alvo=sel.value;sel.value=curLetra;trocarTreino(alvo);};
   renderToday();
 }
 function ensureDraft(){
@@ -981,7 +1015,8 @@ function renderToday(){
   document.getElementById("nextFoco").textContent=w.foco+(w.cardio?" · 🏃 cardio após":"");
   document.getElementById("nextHint").textContent=w.estreia?"Estreia — vamos definir as cargas hoje. Aquecimento manda.":"Cargas de referência já preenchidas. Bata o topo em todas as séries → sobe na próxima.";
   const done=lastDoneLetter();
-  document.getElementById("cycleStrip").innerHTML=CICLO.map(l=>{let cls="c";if(l===curLetra)cls+=" now";else if(CICLO.indexOf(l)<=CICLO.indexOf(done))cls+=" done";return`<div class="${cls}">${l}</div>`;}).join("");
+  document.getElementById("cycleStrip").innerHTML=CICLO.map(l=>{let cls="c";if(l===curLetra)cls+=" now";else if(CICLO.indexOf(l)<=CICLO.indexOf(done))cls+=" done";return`<div class="${cls}" data-letra="${l}" title="${PROGRAMA[l].nome}">${l}</div>`;}).join("");
+  document.querySelectorAll("#cycleStrip .c").forEach(b=>b.onclick=()=>trocarTreino(b.dataset.letra));
   const r=readiness();
   document.getElementById("readyBox").innerHTML=`<div class="ready"><div>${ring(r.score==null?0:r.score,100,r.lvl)}</div><div><span class="pill ${r.lvl}">${r.lvl==="go"?"● Treinar":r.lvl==="care"?"● Cautela":"● Segurar"}</span><h2 style="margin-top:7px">${r.title}</h2><p>${r.msg}</p></div></div>`;
   const dm={};S.draft.ex.forEach(e=>dm[e.nome]=e);
