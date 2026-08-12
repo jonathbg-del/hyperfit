@@ -388,8 +388,14 @@ details pre{background:var(--bg);border:1px solid var(--border);border-radius:10
       <h2 style="font-size:16px">Seu perfil</h2>
       <p class="small muted" style="margin-top:4px">Dados que não mudam no dia a dia. Com eles o app calcula sozinho a meta de água e de macros, usando sempre o <b>peso mais recente</b> do seu diário.</p>
       <div class="perfil-grid">
-        <div><label class="f">Data de nascimento</label><input class="fld" type="date" id="pNasc" style="text-align:left"></div>
-        <div><label class="f">Altura (cm)</label><input class="fld tnum" type="number" id="pAltura" placeholder="175"></div>
+        <div class="full"><label class="f">Data de nascimento</label>
+          <div style="display:flex;gap:8px">
+            <select class="fld" id="pDia" style="flex:1;text-align:left"></select>
+            <select class="fld" id="pMes" style="flex:1.6;text-align:left"></select>
+            <select class="fld" id="pAno" style="flex:1.2;text-align:left"></select>
+          </div>
+        </div>
+        <div class="full"><label class="f">Altura (cm)</label><input class="fld tnum" type="number" id="pAltura" placeholder="175"></div>
         <div><label class="f">Sexo biológico</label><select class="fld" id="pSexo" style="text-align:left"><option value="M">Masculino</option><option value="F">Feminino</option></select></div>
         <div><label class="f">Objetivo</label><select class="fld" id="pObjetivo" style="text-align:left">
           <option value="cutting">Perder gordura</option>
@@ -811,10 +817,54 @@ function calcularMetas(){
   return{ok:true,peso,idade,alt,tmb:Math.round(tmb),tps,fa,gasto:Math.round(gasto),
     kcal,prot,carbo,gord,aguaMl,protPorKg,ajuste};
 }
+const MESES_PT=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+/* Quantos dias tem o mês escolhido — evita oferecer 31 de fevereiro. */
+function diasNoMes(mes,ano){
+  if(!mes)return 31;
+  if(!ano)return [31,29,31,30,31,30,31,31,30,31,30,31][mes-1];
+  return new Date(ano,mes,0).getDate();
+}
+function preencherNascimento(){
+  const dia=document.getElementById("pDia"),mes=document.getElementById("pMes"),ano=document.getElementById("pAno");
+  if(!dia||!mes||!ano)return;
+  const anoAtual=new Date().getFullYear();
+  mes.innerHTML=`<option value="">Mês</option>`+MESES_PT.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+  // do mais recente para o mais antigo: quem nasceu há menos tempo rola menos
+  const anos=[];for(let a=anoAtual-12;a>=anoAtual-100;a--)anos.push(a);
+  ano.innerHTML=`<option value="">Ano</option>`+anos.map(a=>`<option value="${a}">${a}</option>`).join("");
+  atualizarDias();
+  [dia,mes,ano].forEach(el=>el.addEventListener("change",()=>{
+    if(el!==dia)atualizarDias();
+    salvarPerfil();
+  }));
+}
+function atualizarDias(){
+  const dia=document.getElementById("pDia"),mes=document.getElementById("pMes"),ano=document.getElementById("pAno");
+  if(!dia)return;
+  const atual=dia.value;
+  const n=diasNoMes(+mes.value,+ano.value);
+  dia.innerHTML=`<option value="">Dia</option>`+Array.from({length:n},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join("");
+  // não depende do navegador limpar sozinho: 31 de fevereiro deixa de ser selecionável
+  dia.value=(atual&&+atual<=n)?atual:"";
+}
+/* Junta os três campos numa data ISO; devolve "" se estiver incompleta. */
+function nascimentoISO(){
+  const d=+document.getElementById("pDia").value,m=+document.getElementById("pMes").value,a=+document.getElementById("pAno").value;
+  if(!d||!m||!a)return "";
+  return `${a}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+}
+function preencherCamposNascimento(iso){
+  const dia=document.getElementById("pDia"),mes=document.getElementById("pMes"),ano=document.getElementById("pAno");
+  if(!dia||!iso||!/^\d{4}-\d{2}-\d{2}$/.test(iso))return;
+  ano.value=+iso.slice(0,4);
+  mes.value=+iso.slice(5,7);
+  atualizarDias();
+  dia.value=+iso.slice(8,10);
+}
 function renderPerfil(){
   const pf=PERFIL();
   const set=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
-  set("pNasc",pf.nascimento||"");
+  preencherCamposNascimento(pf.nascimento);
   set("pAltura",pf.alturaCm||"");
   set("pSexo",pf.sexo||"M");
   set("pObjetivo",pf.objetivo||"manutencao");
@@ -846,7 +896,7 @@ function salvarPerfil(){
   const g=id=>document.getElementById(id).value;
   const alt=parseFloat(String(g("pAltura")).replace(",","."));
   const fator=parseFloat(String(g("pAguaFator")).replace(",","."));
-  S.settings.perfil={nascimento:g("pNasc")||"",alturaCm:alt>0?alt:null,sexo:g("pSexo")||"M",objetivo:g("pObjetivo")||"manutencao"};
+  S.settings.perfil={nascimento:nascimentoISO(),alturaCm:alt>0?alt:null,sexo:g("pSexo")||"M",objetivo:g("pObjetivo")||"manutencao"};
   S.settings.aguaFator=fator>0?fator:AGUA_FATOR_DEFAULT;
   save();renderPerfil();toast("Perfil salvo ✔");
 }
@@ -1874,7 +1924,8 @@ document.getElementById("clearHistBtn").onclick=()=>{if(confirm("Zerar todo o hi
 document.getElementById("resetBtn").onclick=()=>{if(confirm("Restaurar TUDO ao estado original da planilha? Isto apaga seus registros E volta os exercícios ao padrão.")){S=freshState();save();location.reload();}};
 document.getElementById("pSalvar").onclick=salvarPerfil;
 document.getElementById("pAplicar").onclick=aplicarMetasCalculadas;
-["pNasc","pAltura","pSexo","pObjetivo","pAguaFator"].forEach(id=>{
+preencherNascimento();
+["pAltura","pSexo","pObjetivo","pAguaFator"].forEach(id=>{
   const el=document.getElementById(id);
   if(el)el.addEventListener("change",()=>{salvarPerfil();});
 });
