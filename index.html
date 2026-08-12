@@ -1499,27 +1499,84 @@ document.getElementById("imgFile").onchange=async e=>{
   const imgs=await Promise.all(fs.map(f=>new Promise(res=>{const rd=new FileReader();rd.onload=()=>res({dataUrl:rd.result,mime:f.type});rd.onerror=()=>res(null);rd.readAsDataURL(f);})));
   handleImages(imgs.filter(Boolean));
 };
+/* Monta a mesma frase-resumo que vai na coluna de observações do diário —
+   é o texto que aparecia só quando os dados eram lançados manualmente. */
+function resumoPrint(d){
+  const p=[];
+  if(d.tempoRealMin!=null||d.dormiuInicio||d.dormiuFim){
+    const h=d.tempoRealMin!=null?`${Math.floor(d.tempoRealMin/60)}h${String(d.tempoRealMin%60).padStart(2,"0")} real`:"Sono";
+    const jan=(d.dormiuInicio&&d.dormiuFim)?` (${d.dormiuInicio}-${d.dormiuFim})`:"";
+    p.push(h+jan);
+  }
+  if(d.acordadoMin!=null){
+    const tot=(d.tempoRealMin||0)+d.acordadoMin;
+    const pct=tot>0?Math.round(d.acordadoMin/tot*100):null;
+    p.push(`${d.acordadoMin}min acordado${pct!=null?` (${pct}%)`:""}`);
+  }
+  if(d.profundoMin!=null)p.push(`Profundo ${d.profundoMin}min`);
+  if(d.remMin!=null)p.push(`REM ${d.remMin}min`);
+  if(d.spo2!=null)p.push(`SpO₂ médio ${d.spo2}%`);
+  if(d.pesoKg!=null){
+    const b=[];
+    if(d.gorduraPct!=null)b.push(`${d.gorduraPct}% gordura`);
+    if(d.imc!=null)b.push(`IMC ${d.imc}`);
+    if(d.massaMuscularPct!=null)b.push(`${d.massaMuscularPct}% músculo`);
+    p.push(`Balança: ${d.pesoKg}kg${b.length?" — "+b.join(", "):""}`);
+  }
+  return p.join(". ")+(p.length?".":"");
+}
+/* Variação em relação ao peso anterior registrado. */
+function deltaPeso(iso,peso){
+  const ant=S.diary.filter(d=>d.pesoKg&&d.data<iso).sort((a,b)=>a.data<b.data?-1:1).pop();
+  if(!ant)return "";
+  const dl=+(peso-ant.pesoKg).toFixed(2);
+  if(!dl)return ` · igual a ${fmtDate(ant.data)}`;
+  return ` · ${dl>0?"▲ +":"▼ "}${Math.abs(dl)} kg desde ${fmtDate(ant.data)}`;
+}
 async function handleImages(imgs){
   if(!imgs.length)return;
   const n=imgs.length;
-  await addChatImg("user",n===1?"(print do sono anexado)":`(${n} prints do sono anexados)`,imgs[0].dataUrl);
-  if(!S.settings.geminiKey){addChat("bot","Para eu **ler os prints automaticamente** preciso do Gemini ativo (grátis, em Ajustes). Sem ele, me diga os números: pontuação, recuperação física %, ciclos, sono profundo (min) e REM (min) — eu registro no diário.");return;}
+  await addChatImg("user",n===1?"(print anexado)":`(${n} prints anexados)`,imgs[0].dataUrl);
+  if(!S.settings.geminiKey){addChat("bot","Para eu **ler os prints automaticamente** preciso do Gemini ativo (grátis, em Ajustes). Sem ele, me diga os números: pontuação do sono, recuperação física %, ciclos, profundo e REM (min), ou o peso da balança — eu registro no diário.");return;}
   const log=document.getElementById("chatLog");const tmp=document.createElement("div");tmp.className="msg bot";tmp.textContent=n===1?"Lendo o print…":`Lendo os ${n} prints…`;log.appendChild(tmp);chatScroll();
   const setStatus=t=>{tmp.textContent=(n===1?"Lendo o print… ":`Lendo os ${n} prints… `)+t;chatNoFim();};
-  const prompt=`As imagens a seguir são ${n===1?"um print":`${n} prints`} do MESMO relatório de sono (Samsung Health) — telas diferentes da mesma noite (ex.: pontuação/fatores e fases do sono). Combine os dados de TODAS elas em um único resultado; se um campo aparecer em mais de uma imagem, use o valor mais específico. Responda APENAS um JSON válido, sem texto extra, com as chaves (use null quando o campo não aparecer em nenhuma imagem): {"sonoPont":num,"recFisica":num,"recMental":num,"descanso":num,"ciclos":num,"profundoMin":num,"remMin":num,"acordadoMin":num,"leveMin":num,"spo2":num}. Converta horas:min em minutos (ex.: 1h12 = 72).`;
+  const prompt=`As imagens a seguir são ${n===1?"um print":`${n} prints`} de aplicativos de saúde. Podem ser:
+(a) telas de SONO (Samsung Health): pontuação, fatores, fases do sono;
+(b) telas de BALANÇA / composição corporal (peso, IMC, % de gordura, massa muscular);
+(c) uma mistura das duas.
+Combine os dados de TODAS as imagens num único resultado. Se um campo aparecer em mais de uma imagem, use o valor mais específico. Se houver data visível no print, devolva em "dataColeta" no formato AAAA-MM-DD.
+Responda APENAS um JSON válido, sem texto extra e sem markdown, com estas chaves (use null quando o campo não aparecer em nenhuma imagem):
+{"sonoPont":num,"recFisica":num,"recMental":num,"descanso":num,"ciclos":num,"profundoMin":num,"remMin":num,"acordadoMin":num,"leveMin":num,"spo2":num,"dormiuInicio":"HH:MM","dormiuFim":"HH:MM","tempoRealMin":num,"pesoKg":num,"imc":num,"gorduraPct":num,"massaMuscularPct":num,"gorduraKg":num,"dataColeta":"AAAA-MM-DD"}
+Converta horas:min em minutos (ex.: 1h12 = 72). Use ponto como separador decimal.`;
   try{
     const small=await Promise.all(imgs.map(im=>shrinkImage(im.dataUrl,im.mime)));
     const parts=[{text:prompt},...small.map(im=>({inline_data:{mime_type:im.mime,data:im.dataUrl.split(",")[1]}}))];
     const g=await geminiCall({contents:[{role:"user",parts}]},setStatus);
     const mt=(g.texto||"").match(/\{[\s\S]*\}/);tmp.remove();
     if(!mt){addChat("bot","Não consegui ler "+(n===1?"o print":"os prints")+".\n\n"+(g.texto?"A IA respondeu mas sem dados reconhecíveis. Confira se são as telas de sono do Samsung Health.":gemErroMsg(g)));return;}
-    const data=JSON.parse(mt[0]);const e={data:todayISO()};
-    ["sonoPont","recFisica","recMental","ciclos","profundoMin","remMin"].forEach(k=>{if(data[k]!=null)e[k]=Number(data[k]);});
-    if(Object.keys(e).length===1){addChat("bot","Li "+(n===1?"a imagem":"as imagens")+", mas não encontrei nenhum dado de sono reconhecível. Confira se são as telas de sono do Samsung Health, ou digite os números no Diário.");return;}
-    mergeDiary(e);renderDiaryHist();renderToday();renderProgress();
+    const data=JSON.parse(mt[0]);
+    // usa a data do próprio print quando ela aparecer; senão, hoje
+    const iso=(typeof data.dataColeta==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(data.dataColeta))?data.dataColeta:todayISO();
+    const e={data:iso};
+    ["sonoPont","recFisica","recMental","ciclos","profundoMin","remMin","pesoKg"].forEach(k=>{if(data[k]!=null)e[k]=Number(data[k]);});
+    if(Object.keys(e).length===1){addChat("bot","Li "+(n===1?"a imagem":"as imagens")+", mas não encontrei dados reconhecíveis de sono nem de balança. Tente um print mais nítido, ou digite os números no Diário.");return;}
+    const resumo=resumoPrint(data);
+    if(resumo)e.obs=resumo;
+    mergeDiary(e);renderDiaryHist();renderToday();renderProgress();renderWater();
+    const temSono=data.sonoPont!=null||data.profundoMin!=null||data.ciclos!=null;
+    const temPeso=data.pesoKg!=null;
+    const linhas=[];
+    if(temSono)linhas.push(`💤 Pontuação ${data.sonoPont??'—'} · 🔋 Rec. física ${data.recFisica??'—'}% · 🧠 Rec. mental ${data.recMental??'—'}% · 🔁 ${data.ciclos??'—'} ciclos · 🌙 Profundo ${data.profundoMin??'—'}min · 👁️ REM ${data.remMin??'—'}min`);
+    if(temPeso){
+      const extras=[];
+      if(data.imc!=null)extras.push(`IMC ${data.imc}`);
+      if(data.gorduraPct!=null)extras.push(`${data.gorduraPct}% gordura`);
+      if(data.massaMuscularPct!=null)extras.push(`${data.massaMuscularPct}% músculo`);
+      linhas.push(`⚖️ Peso ${data.pesoKg} kg${extras.length?" · "+extras.join(" · "):""}${deltaPeso(iso,data.pesoKg)}`);
+    }
     const r=readiness();
-    addChat("bot",`**${n===1?"Print":`${n} prints`} lido${n===1?"":"s"} e diário atualizado ✔**\n💤 Pontuação ${data.sonoPont??'—'} · 🔋 Rec. física ${data.recFisica??'—'}% · 🧠 Rec. mental ${data.recMental??'—'}% · 🔁 ${data.ciclos??'—'} ciclos · 🌙 Profundo ${data.profundoMin??'—'}min · 👁️ REM ${data.remMin??'—'}min\n\n**Leitura:** ${r.title}. ${r.msg}`);
-    toast("Sono registrado ✔");
+    addChat("bot",`**${n===1?"Print":`${n} prints`} lido${n===1?"":"s"} e diário atualizado ✔** ${iso!==todayISO()?`(data do print: ${fmtDate(iso)})`:""}\n${linhas.join("\n")}\n\n**Resumo salvo no diário:** ${resumo||"—"}${temSono?`\n\n**Leitura:** ${r.title}. ${r.msg}`:""}`);
+    toast(temPeso&&!temSono?"Peso registrado ✔":"Diário atualizado ✔");
   }catch(err){tmp.remove();addChat("bot","Erro ao processar "+(n===1?"o print":"os prints")+": "+(err&&err.message?err.message:"falha desconhecida")+". Digite os números no Diário.");}
 }
 async function geminiFood(nome,g){try{const r=await geminiCall({contents:[{role:"user",parts:[{text:`Estime os macros de ${g} g de "${nome}". Responda APENAS JSON: {"kcal":num,"prot":num,"carbo":num,"gord":num} (totais para ${g} g).`}]}]});const m=(r.texto||"").match(/\{[\s\S]*\}/);if(!m)return null;const d=JSON.parse(m[0]);return{kcal:Math.round(d.kcal),prot:Math.round(d.prot),carbo:Math.round(d.carbo),gord:Math.round(d.gord)};}catch(e){return null;}}
