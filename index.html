@@ -710,6 +710,13 @@ function save(silent){
   return false;
 }
 /* Quanto do armazenamento o app está ocupando. */
+/* Mostra em Ajustes quanto do armazenamento o app ocupa. */
+function renderUsoArmz(){
+  const el=document.getElementById("usoArmz");if(!el)return;
+  const u=usoArmazenamento();
+  el.textContent=`Armazenamento em uso: ${u.mb} MB (limite do navegador ≈ 5 MB). As imagens antigas do chat são descartadas automaticamente.`;
+  el.style.color=u.mb>3.5?"#FF6A2B":"";
+}
 function usoArmazenamento(){
   try{const b=JSON.stringify(S).length;return{bytes:b,mb:+(b/1048576).toFixed(2)};}
   catch(e){return{bytes:0,mb:0};}
@@ -1278,9 +1285,7 @@ document.getElementById("saveDiary").onclick=()=>{const g=id=>document.getElemen
   const num=id=>g(id)?+g(id):null;
   const e={data,treino:null,sonoPont:num("dSono"),recFisica:num("dRecF"),recMental:num("dRecM"),ciclos:num("dCiclos"),profundoMin:num("dProf"),remMin:num("dRem"),pesoKg:num("dPeso"),cardioMin:num("dCardio"),aguaMl:num("dAgua"),humor:num("dHumor"),energia:num("dEnergia"),ansiedade:num("dAnsi"),obs:g("dObs")};
   mergeDiary(e);renderDiaryHist();renderToday();renderWater();renderMeds();renderExames();
-(function(){const el=document.getElementById("usoArmz");if(!el)return;const u=usoArmazenamento();
-  el.textContent=`Armazenamento em uso: ${u.mb} MB (limite do navegador ≈ 5 MB). As imagens antigas do chat são descartadas automaticamente.`;
-  if(u.mb>3.5)el.style.color="#FF6A2B";})();toast("Diário salvo ✔");
+renderUsoArmz();toast("Diário salvo ✔");
   ["dSono","dRecF","dRecM","dCiclos","dProf","dRem","dPeso","dCardio","dAgua","dHumor","dEnergia","dAnsi","dObs"].forEach(i=>document.getElementById(i).value="");};
 function mergeDiary(e){const ix=S.diary.findIndex(d=>d.data===e.data);if(ix>=0){Object.keys(e).forEach(k=>{if(e[k]!=null&&e[k]!=="")S.diary[ix][k]=e[k];});}else S.diary.push(e);save();}
 function renderDiaryHist(){const dg=[...S.diary].sort((a,b)=>a.data<b.data?1:-1);document.getElementById("diaryHist").innerHTML=dg.map(d=>`<div class="d"><div class="dt tnum">${fmtDate(d.data)}</div><div class="info"><div class="t">${d.treino?("Treino "+d.treino):"—"}${d.sonoPont!=null?` · 💤 ${d.sonoPont}`:""}${d.recFisica!=null?` · 🔋 ${d.recFisica}%`:""}${d.ciclos!=null?` · 🔁 ${d.ciclos}`:""}${d.pesoKg?` · ⚖️ ${d.pesoKg}`:""}${d.aguaMl?` · 💧 ${(d.aguaMl/1000).toFixed(1)}L`:""}${(d.meds&&d.meds.length)?` · 💉 ${d.meds.map(a=>a.nome+" "+(a.dose||"")+(a.unidade||"")).join(", ")}`:""}</div><div class="o">${d.obs||""}</div></div></div>`).join("");}
@@ -1537,7 +1542,7 @@ document.getElementById("progBack").onclick=()=>{S.draft=null;initToday();switch
 document.getElementById("progResetDefault").onclick=()=>{if(confirm("Restaurar os exercícios originais da planilha? Suas alterações no programa serão perdidas (o histórico de treinos é mantido).")){S.program=JSON.parse(JSON.stringify(PROGRAMA_DEFAULT));PROGRAMA=S.program;save();renderProgEdit();toast("Programa restaurado");}};
 
 /* ================= NAV / UTIL ================= */
-function switchView(v){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.getElementById("view-"+v).classList.add("active");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));document.getElementById("chatDock").style.display=v==="coach"?"block":"none";document.body.style.paddingBottom=v==="coach"?"150px":"88px";window.scrollTo(0,0);if(v==="prog")renderProgress();if(v==="coach")chatScroll();if(v==="hoje"){renderWater();}if(v==="diario"){renderDiaryHist();renderMeds();renderExames();}if(v==="nutri")renderNutri();if(v==="coach"){renderChat();renderSuggest();}}
+function switchView(v){document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));document.getElementById("view-"+v).classList.add("active");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));document.getElementById("chatDock").style.display=v==="coach"?"block":"none";document.body.style.paddingBottom=v==="coach"?"150px":"88px";window.scrollTo(0,0);if(v==="prog")renderProgress();if(v==="coach")chatScroll();if(v==="hoje"){renderWater();}if(v==="diario"){renderDiaryHist();renderMeds();renderExames();}if(v==="ajustes")renderUsoArmz();if(v==="nutri")renderNutri();if(v==="coach"){renderChat();renderSuggest();}}
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 function toast(t){const el=document.getElementById("toast");el.textContent=t;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),1900);}
 function applyTheme(){document.documentElement.setAttribute("data-theme",S.settings.theme);const m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute("content",S.settings.theme==="light"?"#F3F5F8":"#0E1217");}
@@ -1675,7 +1680,7 @@ document.getElementById("fbHelp").textContent=`1. console.firebase.google.com �
 
 /* ================= BOOT ================= */
 applyTheme();document.getElementById("geminiKey").value=S.settings.geminiKey||"";
-renderWater();renderMeds();
+renderWater();renderMeds();renderExames();renderUsoArmz();
 initToday();initDiary();renderChat();renderSyncUI();
 /* Android pode encerrar a aba a qualquer momento ao trocar de app.
    Grava imediatamente sempre que a tela é escondida. */
