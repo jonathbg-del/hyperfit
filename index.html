@@ -356,9 +356,10 @@ details pre{background:var(--bg);border:1px solid var(--border);border-radius:10
       <input class="fld" id="mNome" style="text-align:left" placeholder="ex.: patinho, arroz, ovo, whey..." list="foodList" autocomplete="off">
       <datalist id="foodList"></datalist>
       <div class="row" style="margin-top:8px">
-        <div style="flex:2"><label class="f">Quantidade (g)</label><input class="fld tnum" type="number" id="mQtd" placeholder="ex.: 200"></div>
-        <div style="flex:1;display:flex;align-items:flex-end"><button class="btn cool" id="calcMeal" style="padding:12px">Calcular</button></div>
+        <div style="flex:1"><label class="f">Quantidade</label><input class="fld tnum" type="number" step="any" id="mQtd" placeholder="ex.: 200"></div>
+        <div style="flex:1"><label class="f">Unidade</label><select class="fld" id="mUnid" style="text-align:left"></select></div>
       </div>
+      <button class="btn cool" id="calcMeal" style="margin-top:8px;width:100%;padding:12px">Calcular</button>
       <div class="preview-macro" id="mealPreview" style="display:none"></div>
       <details style="margin-top:10px"><summary>Não achou? Inserir macros manualmente</summary>
         <div class="row" style="margin-top:8px">
@@ -1329,14 +1330,70 @@ function findFood(q){const n=norm(q);if(!n)return null;if(FOODS[n])return{nome:n
     const rank=sc-kt.length*0.05+(k.startsWith(n)?0.5:0);if(rank>bestScore){bestScore=rank;best=k;}}
   return best?{nome:best,f:FOODS[best]}:null;}
 function macrosFor(food,g){const f=food.f;const k=g/100;return{kcal:Math.round(f.kcal*k),prot:Math.round(f.prot*k),carbo:Math.round(f.carbo*k),gord:Math.round(f.gord*k)};}
+/* Unidades aceitas no registro de alimentos.
+   base:"g" usa a tabela local (que é por 100 g); as demais vão para a IA,
+   que sabe o peso típico de uma unidade, uma fatia, uma colher etc. */
+const UNIDADES=[
+  {v:"g",    label:"g (gramas)",        base:true},
+  {v:"ml",   label:"ml (mililitros)"},
+  {v:"unid", label:"unidade(s)"},
+  {v:"fatia",label:"fatia(s)"},
+  {v:"csopa",label:"colher(es) de sopa"},
+  {v:"ccha", label:"colher(es) de chá"},
+  {v:"xic",  label:"xícara(s)"},
+  {v:"copo", label:"copo(s)"},
+  {v:"mg",   label:"mg (miligramas)"}
+];
+const UNID_TXT={g:"g",ml:"ml",unid:"unidade(s)",fatia:"fatia(s)",csopa:"colher(es) de sopa",
+  ccha:"colher(es) de chá",xic:"xícara(s)",copo:"copo(s)",mg:"mg"};
+function unidAtual(){const el=document.getElementById("mUnid");return (el&&el.value)||"g";}
+function unidLabel(u,q){
+  const t=UNID_TXT[u]||u;
+  if(q===1)return t.replace("(s)","").replace("(es)","");
+  return t.replace("(s)","s").replace("(es)","es");
+}
+(function initUnidades(){
+  const el=document.getElementById("mUnid");if(!el)return;
+  el.innerHTML=UNIDADES.map(u=>`<option value="${u.v}">${u.label}</option>`).join("");
+})();
 let pendingMeal=null;
-document.getElementById("calcMeal").onclick=async()=>{const nome=document.getElementById("mNome").value.trim();const g=+document.getElementById("mQtd").value;if(!nome){toast("Digite o alimento");return;}if(!g){toast("Digite a quantidade em g");return;}
-  const found=findFood(nome);const pv=document.getElementById("mealPreview");
-  if(found){const mac=macrosFor(found,g);pendingMeal={nome:`${found.nome} (${g}g)`,...mac};pv.style.display="block";pv.innerHTML=`<div class="muted small" style="margin-bottom:4px">base: ${found.nome}</div>≈ <b>${mac.kcal} kcal</b> · P ${mac.prot}g · C ${mac.carbo}g · G ${mac.gord}g <button class="btn cool" id="confirmMeal" style="margin-top:8px">Adicionar à refeição</button>`;document.getElementById("confirmMeal").onclick=commitMeal;}
-  else if(S.settings.geminiKey){pv.style.display="block";pv.innerHTML="Consultando IA…";const mac=await geminiFood(nome,g);if(mac){pendingMeal={nome:`${nome} (${g}g)`,...mac};pv.innerHTML=`≈ <b>${mac.kcal} kcal</b> · P ${mac.prot}g · C ${mac.carbo}g · G ${mac.gord}g <span class="muted small">(estimado por IA)</span><button class="btn cool" id="confirmMeal" style="margin-top:8px">Adicionar</button>`;document.getElementById("confirmMeal").onclick=commitMeal;}else pv.innerHTML="Não consegui estimar. Use os macros manuais abaixo.";}
-  else{pv.style.display="block";pv.innerHTML=`Não achei "<b>${nome}</b>" na base. Abra "Inserir macros manualmente" ou ative o Gemini em Ajustes p/ estimar automático.`;}
+document.getElementById("calcMeal").onclick=async()=>{
+  const nome=document.getElementById("mNome").value.trim();
+  const q=parseFloat(String(document.getElementById("mQtd").value).replace(",","."));
+  const unid=unidAtual();
+  const pv=document.getElementById("mealPreview");
+  if(!nome){toast("Digite o alimento");return;}
+  if(!(q>0)){toast("Digite a quantidade");return;}
+  const rotulo=`${nome} (${q} ${unidLabel(unid,q)})`;
+  const botao=`<button class="btn cool" id="confirmMeal" style="margin-top:8px">Adicionar à refeição</button>`;
+  pv.style.display="block";
+
+  // gramas e miligramas usam a tabela local, que é por 100 g
+  const gramas=unid==="g"?q:(unid==="mg"?q/1000:null);
+  if(gramas!=null){
+    const found=findFood(nome);
+    if(found){
+      const mac=macrosFor(found,gramas);
+      pendingMeal={nome:rotulo,...mac};
+      pv.innerHTML=`<div class="muted small" style="margin-bottom:4px">base: ${found.nome}</div>≈ <b>${mac.kcal} kcal</b> · P ${mac.prot}g · C ${mac.carbo}g · G ${mac.gord}g ${botao}`;
+      document.getElementById("confirmMeal").onclick=commitMeal;return;
+    }
+  }
+  if(!S.settings.geminiKey){
+    pv.innerHTML=gramas!=null
+      ? `Não achei "<b>${esc(nome)}</b>" na base. Abra "Inserir macros manualmente" ou ative o Gemini em Ajustes p/ estimar automático.`
+      : `Para converter <b>${q} ${unidLabel(unid,q)}</b> em macros eu preciso do Gemini ativo (grátis, em Ajustes) — a tabela local só trabalha em gramas. Enquanto isso, use "Inserir macros manualmente".`;
+    return;
+  }
+  pv.innerHTML="Consultando IA…";
+  const mac=await geminiFood(nome,q,unid);
+  if(!mac){pv.innerHTML="Não consegui estimar agora. Tente de novo em instantes ou use os macros manuais abaixo.";return;}
+  pendingMeal={nome:rotulo,kcal:mac.kcal,prot:mac.prot,carbo:mac.carbo,gord:mac.gord};
+  const eq=(mac.gramasEq&&unid!=="g"&&unid!=="mg")?` <span class="muted small">(≈ ${mac.gramasEq} g)</span>`:"";
+  pv.innerHTML=`<div class="muted small" style="margin-bottom:4px">${esc(rotulo)}${eq}</div>≈ <b>${mac.kcal} kcal</b> · P ${mac.prot}g · C ${mac.carbo}g · G ${mac.gord}g <span class="muted small">(estimado por IA)</span> ${botao}`;
+  document.getElementById("confirmMeal").onclick=commitMeal;
 };
-function commitMeal(){if(!pendingMeal)return;pendingMeal.data=todayISO();S.meals.push(pendingMeal);save();pendingMeal=null;document.getElementById("mNome").value="";document.getElementById("mQtd").value="";document.getElementById("mealPreview").style.display="none";renderNutri();renderProgress();toast("Adicionado ✔");}
+function commitMeal(){if(!pendingMeal)return;pendingMeal.data=todayISO();S.meals.push(pendingMeal);save();pendingMeal=null;document.getElementById("mNome").value="";document.getElementById("mQtd").value="";document.getElementById("mUnid").value="g";document.getElementById("mealPreview").style.display="none";renderNutri();renderProgress();toast("Adicionado ✔");}
 document.getElementById("addManual").onclick=()=>{const g=id=>document.getElementById(id).value;const nome=document.getElementById("mNome").value.trim()||"Refeição";S.meals.push({data:todayISO(),nome,kcal:+g("mKcal")||0,prot:+g("mProt")||0,carbo:+g("mCarbo")||0,gord:+g("mGord")||0});save();["mNome","mQtd","mKcal","mProt","mCarbo","mGord"].forEach(i=>document.getElementById(i).value="");renderNutri();renderProgress();toast("Adicionado ✔");};
 document.getElementById("editMeta").onclick=()=>{const mt=META();const kcal=prompt("Meta de calorias (kcal):",mt.kcal);if(kcal===null)return;const prot=prompt("Meta de proteína (g):",mt.prot);const carbo=prompt("Meta de carboidrato (g):",mt.carbo);const gord=prompt("Meta de gordura (g):",mt.gord);S.settings.nutriMeta={kcal:+kcal||mt.kcal,prot:+prot||mt.prot,carbo:+carbo||mt.carbo,gord:+gord||mt.gord};save();renderNutri();renderProgress();toast("Metas atualizadas ✔");};
 function renderNutri(){const today=todayISO();const tm=S.meals.filter(m=>m.data===today);const mt=META();
@@ -1579,7 +1636,22 @@ Converta horas:min em minutos (ex.: 1h12 = 72). Use ponto como separador decimal
     toast(temPeso&&!temSono?"Peso registrado ✔":"Diário atualizado ✔");
   }catch(err){tmp.remove();addChat("bot","Erro ao processar "+(n===1?"o print":"os prints")+": "+(err&&err.message?err.message:"falha desconhecida")+". Digite os números no Diário.");}
 }
-async function geminiFood(nome,g){try{const r=await geminiCall({contents:[{role:"user",parts:[{text:`Estime os macros de ${g} g de "${nome}". Responda APENAS JSON: {"kcal":num,"prot":num,"carbo":num,"gord":num} (totais para ${g} g).`}]}]});const m=(r.texto||"").match(/\{[\s\S]*\}/);if(!m)return null;const d=JSON.parse(m[0]);return{kcal:Math.round(d.kcal),prot:Math.round(d.prot),carbo:Math.round(d.carbo),gord:Math.round(d.gord)};}catch(e){return null;}}
+/* Estima macros para qualquer unidade. Pede também o peso equivalente em gramas,
+   para o usuário conferir se a porção assumida bate com a real. */
+async function geminiFood(nome,qtd,unid){
+  unid=unid||"g";
+  const desc=`${qtd} ${unidLabel(unid,qtd)} de "${nome}"`;
+  const extra=unid==="g"?"":` Considere a porção típica brasileira. Informe em "gramasEq" o peso total equivalente em gramas.`;
+  try{
+    const r=await geminiCall({contents:[{role:"user",parts:[{text:
+      `Estime os macronutrientes de ${desc}.${extra} Responda APENAS um JSON válido, sem texto extra: {"kcal":num,"prot":num,"carbo":num,"gord":num,"gramasEq":num} — totais para a quantidade informada.`}]}]});
+    const m=(r.texto||"").match(/\{[\s\S]*\}/);if(!m)return null;
+    const d=JSON.parse(m[0]);
+    if(!isFinite(d.kcal))return null;
+    return{kcal:Math.round(d.kcal),prot:Math.round(d.prot),carbo:Math.round(d.carbo),gord:Math.round(d.gord),
+      gramasEq:isFinite(d.gramasEq)?Math.round(d.gramasEq):null};
+  }catch(e){return null;}
+}
 
 /* ================= EDITOR DE PROGRAMA ================= */
 function esc(s){return (''+ (s??'')).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
